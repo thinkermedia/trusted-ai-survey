@@ -300,6 +300,9 @@
   }
   .notice-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
   .notice p { margin: 0; font-size: 15px; line-height: 1.6; }
+  .introbox { margin-top: 8px; padding: 24px 26px; }
+  .introbox p { font-size: 16px; line-height: 1.7; }
+  .introbox p + p { margin-top: 16px; }
   .start { padding: 14px 34px; }
   @media (max-width: 480px) { .headline { font-size: 32px; } .lede { font-size: 18px; } }
 
@@ -720,7 +723,9 @@ function optionValue(q, idx, code, label) {
 const SUPABASE_URL = "https://eqcajylttihnfqhbenxh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_WioXQEWQLg8ahUod8uXHYg_B4qHhvJD";
 // "production": a link without ?rid= is rejected. "artifact": a link without ?rid= opens a demo copy that records nothing.
-const BUILD_TARGET = "production";
+const BUILD_TARGET = "artifact";
+// Questions supplied from the sample file instead of asked of the respondent (review build only).
+const APPENDED_FROM_SAMPLE = ["P-01","P-03","P-04"];
 
 // ---------------- State ----------------
 const state = {
@@ -868,7 +873,7 @@ async function gateAfter(q) {
 
 // ---------------- Visibility / ordering ----------------
 function computeOrder() {
-  state.order = QUESTIONS.filter(q => !q.showIf || q.showIf(state.answers)).map(q => q.id);
+  state.order = QUESTIONS.filter(q => !APPENDED_FROM_SAMPLE.includes(q.id) && (!q.showIf || q.showIf(state.answers))).map(q => q.id);
 }
 
 function currentQuestion() {
@@ -1231,15 +1236,10 @@ function renderIntro() {
   app.innerHTML = `
     ${topbarHtml(null)}
     <div class="card page">
-      <div class="eyebrow-brand">Forbes Insights</div>
-      <h1 class="headline">Who is governing AI, and how well?</h1>
-      <p class="lede">Forbes Insights invites you to take part in a benchmarking survey on trusted AI.</p>
-      <p class="body">AI has moved from pilot to production, and from answering questions to taking action. Leaders are now expected to show how their organizations govern it, test it, secure it, and stand behind it.</p>
-      <p class="body">This survey looks at what is actually in place today: strategy and oversight, data and visibility, workforce readiness, autonomous agents, risk controls, incident response, and external assurance. There are no right answers. We are interested in an honest picture of current practice.</p>
-      <p class="body">The survey takes approximately 15 to 20 minutes. Please answer based on what is currently in place and operating in your organization, not on what is planned.</p>
-      <div class="notice">
-        <div class="notice-title">Your privacy</div>
-        <p>Forbes is committed to protecting your privacy. Your individual responses will be kept strictly confidential and will only be reported in aggregate.</p>
+      <h1 class="headline">Introduction</h1>
+      <div class="notice introbox">
+        <p>Thank you for taking part in this survey. Forbes Insights is examining how organizations govern, control, and certify AI in practice. This survey should take approximately 15 to 20 minutes of your time. Please base your answers on what processes are currently in place and operating today in your organization.</p>
+        <p>Forbes is committed to protecting your privacy. Your individual responses will be kept strictly confidential and will only be reported in aggregate. We appreciate your insights.</p>
       </div>
       <button class="btn primary start" id="startBtn">Begin survey</button>
     </div>
