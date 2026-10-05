@@ -726,6 +726,8 @@ const SUPABASE_KEY = "sb_publishable_WioXQEWQLg8ahUod8uXHYg_B4qHhvJD";
 const BUILD_TARGET = "artifact";
 // Questions supplied from the sample file instead of asked of the respondent (review build only).
 const APPENDED_FROM_SAMPLE = ["P-01","P-03","P-04"];
+// Question codes (P-02, G-01 ...) are shown in the full build and hidden in the client review build.
+const SHOW_QUESTION_IDS = false;
 
 // ---------------- State ----------------
 const state = {
@@ -941,7 +943,7 @@ function render() {
   app.innerHTML = `
     ${topbarHtml(pct)}
     <div class="card">
-      <div class="meta"><span class="section-name">${SECTION_NAMES[q.section]}</span><span class="qid-pill">${q.id}</span></div>
+      <div class="meta"><span class="section-name">${SECTION_NAMES[q.section]}</span>${SHOW_QUESTION_IDS ? `<span class="qid-pill">${q.id}</span>` : ""}</div>
       <h1 class="prompt">${renderPromptWithHover(q)}</h1>
       ${q.sub ? `<p class="instruction">${q.sub}</p>` : ""}
       <div class="options">${renderOptions(q)}</div>
