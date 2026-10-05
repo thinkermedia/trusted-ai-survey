@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="robots" content="noindex, nofollow"/>
+<title>Field Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@500;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#181716; --grey:#7F7F7E; --paper:#FCFCFC; --g10:#7F7F7E1A; --g20:#7F7F7E33; --maroon:#8B1A1A; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:"Work Sans",-apple-system,sans-serif; -webkit-font-smoothing:antialiased; }
+  .col { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  header { border-bottom: 8px solid var(--ink); padding: calc(18px + env(safe-area-inset-top,0px)) 0 16px; }
+  header .col { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  .logo { height: 22px; width:auto; display:block; }
+  .stamp { font-size: 13px; color: var(--grey); text-align:right; }
+  h1 { font-family:"Roboto Slab",serif; font-weight:700; font-size: 30px; margin: 32px 0 6px; }
+  .sub { color: var(--grey); font-size: 15px; margin: 0 0 24px; }
+  .login { max-width: 420px; margin: 72px auto; padding: 0 24px; }
+  .login input { width:100%; padding: 13px 14px; border:1px solid var(--g20); border-radius:2px; font: inherit; font-size:16px; background: var(--paper); color: var(--ink); margin: 14px 0; }
+  .login input:focus { outline:none; border-color: var(--ink); }
+  .btn { font: inherit; font-weight:500; font-size:15px; padding: 12px 26px; border:1px solid var(--ink); background: var(--ink); color: var(--paper); border-radius:2px; cursor:pointer; }
+  .err { color: var(--maroon); font-size: 14.5px; font-weight:500; min-height: 22px; }
+  .hero { border:2px solid var(--ink); border-radius:2px; padding: 22px; margin-bottom: 18px; background: var(--g10); }
+  .hero .big { font-family:"Roboto Slab",serif; font-weight:700; font-size: 44px; line-height:1; }
+  .hero .of { font-size: 18px; color: var(--grey); font-weight:500; margin-left:6px; }
+  .bar { height: 10px; background: var(--g20); border-radius:2px; overflow:hidden; margin-top: 14px; }
+  .bar > i { display:block; height:100%; background: var(--ink); }
+  .tiles { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; margin-bottom: 8px; }
+  .tile { border:1px solid var(--g20); border-radius:2px; padding: 14px 16px; }
+  .tile b { display:block; font-family:"Roboto Slab",serif; font-size: 28px; }
+  .tile span { font-size: 13px; color: var(--grey); font-weight:500; }
+  h2 { font-family:"Roboto Slab",serif; font-size: 20px; margin: 34px 0 4px; }
+  .note { font-size: 13.5px; color: var(--grey); margin: 0 0 12px; }
+  .row { display:grid; grid-template-columns: minmax(150px, 2fr) 3fr 150px; gap: 14px; align-items:center; padding: 11px 0; border-bottom: 1px solid var(--g20); font-size: 15px; }
+  .row .bar { margin:0; }
+  .row .num { text-align:right; font-weight:600; font-variant-numeric: tabular-nums; }
+  .row .num small { color: var(--grey); font-weight:500; }
+  .full .bar > i { background: var(--maroon); }
+  .full .num { color: var(--maroon); }
+  .tag { font-size: 11.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color: var(--maroon); border:1px solid var(--maroon); border-radius:2px; padding:1px 6px; margin-left:8px; }
+  .days { display:flex; gap:6px; align-items:flex-end; height: 90px; margin-top: 10px; }
+  .days div { flex:1; background: var(--ink); min-width:6px; position:relative; border-radius:1px 1px 0 0; }
+  .days div span { position:absolute; bottom:100%; left:50%; transform:translateX(-50%); font-size:11px; color: var(--grey); padding-bottom:2px; }
+  .daylabels { display:flex; gap:6px; font-size:11px; color: var(--grey); margin-top:4px; }
+  .daylabels span { flex:1; text-align:center; min-width:6px; overflow:hidden; }
+  .endspace { height: 60px; }
+  .titlerow { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .btn.dl { background: transparent; color: var(--ink); padding: 10px 18px; font-size: 14px; margin-bottom: 8px; }
+  .btn.dl:hover { background: var(--g10); }
+  .hero { display:flex; align-items:center; justify-content:space-between; gap: 24px; }
+  .hero .left { flex:1; min-width:0; }
+  .ring { position:relative; width:112px; height:112px; flex-shrink:0; }
+  .ring svg { width:100%; height:100%; transform: rotate(-90deg); }
+  .ring .c { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:"Roboto Slab",serif; font-weight:700; font-size:22px; }
+  .charts { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0 4px; }
+  .panel { border:1px solid var(--g20); border-radius:2px; padding: 18px; }
+  .panel h3 { font-family:"Roboto Slab",serif; font-size:16px; margin:0 0 14px; }
+  .donutwrap { display:flex; align-items:center; gap: 18px; }
+  .donut { width: 128px; height:128px; flex-shrink:0; position:relative; }
+  .donut svg { width:100%; height:100%; transform: rotate(-90deg); }
+  .donut .c { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:"Roboto Slab",serif; font-weight:700; font-size:24px; line-height:1; }
+  .donut .c small { font-family:"Work Sans",sans-serif; font-weight:500; font-size:11px; color:var(--grey); margin-top:4px; }
+  .legend { flex:1; min-width:0; font-size:13.5px; }
+  .legend div { display:flex; align-items:center; gap:8px; padding: 3px 0; }
+  .legend i { width:11px; height:11px; border-radius:2px; flex-shrink:0; }
+  .legend b { margin-left:auto; font-variant-numeric: tabular-nums; }
+  .cols { display:flex; gap: 10px; align-items:flex-end; height: 190px; margin-top: 8px; }
+  .colwrap { flex:1; min-width:0; max-width: 90px; margin: 0 auto; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; }
+  .colbox { position:relative; width:100%; max-width: 64px; background: var(--g10); border:1px solid var(--g20); border-bottom:none; }
+  .colbox i { position:absolute; left:0; right:0; bottom:0; background: var(--ink); }
+  .colbox.full i { background: var(--maroon); }
+  .colnum { font-size:12.5px; font-weight:600; margin-bottom:5px; white-space:nowrap; font-variant-numeric: tabular-nums; }
+  .colnum small { color:var(--grey); font-weight:500; }
+  .collabels { display:flex; gap:10px; margin-top:8px; }
+  .collabels span { flex:1; max-width:90px; margin:0 auto; text-align:center; font-size:12px; color:var(--grey); line-height:1.3; }
+  .legend-note { display:flex; gap:16px; font-size:12.5px; color:var(--grey); margin-top:10px; align-items:center; }
+  .legend-note i { display:inline-block; width:11px; height:11px; margin-right:6px; vertical-align:-1px; }
+  .empty { color:var(--grey); font-size:14px; padding: 36px 0; text-align:center; }
+  @media (max-width: 760px) { .charts { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .donutwrap { flex-direction:column; align-items:flex-start; } .cols { gap:6px; } .collabels { gap:6px; } .ring { width:92px; height:92px; } .ring .c { font-size:18px; } }
+
+  @media (max-width: 560px) {
+    .col { padding: 0 18px; } h1 { font-size: 24px; } .hero .big { font-size: 36px; }
+    .row { grid-template-columns: 1fr 110px; } .row .bar { grid-column: 1 / -1; order: 3; }
+  }
+</style>
+</head>
+<body>
+<header><div class="col"><div><svg class="logo" xmlns="http://www.w3.org/2000/svg" x="0" y="0" viewBox="0 0 200 54" xml:space="preserve" style="color:#181716;fill:#181716;stroke-width:1px;font-family:Graphik, sans-serif"><path xmlns="http://www.w3.org/2000/svg" d="M113.3 18.2c0-5.8.1-11.2.4-16.2L98.4 4.9v1.4l1.5.2c1.1.1 1.8.5 2.2 1.1.4.7.7 1.7.9 3.2.2 2.9.4 9.5.3 19.9 0 10.3-.1 16.8-.3 19.3 5.5 1.2 9.8 1.7 13 1.7 6 0 10.7-1.7 14.1-5.2 3.4-3.4 5.2-8.2 5.2-14.1 0-4.7-1.3-8.6-3.9-11.7-2.6-3.1-5.9-4.6-9.8-4.6-2.6 0-5.3.7-8.3 2.1zm.3 30.8c-.2-3.2-.4-12.8-.4-28.5.9-.3 2.1-.5 3.6-.5 2.4 0 4.3 1.2 5.7 3.7 1.4 2.5 2.1 5.5 2.1 9.3 0 4.7-.8 8.5-2.4 11.7-1.6 3.1-3.6 4.7-6.1 4.7-.8-.2-1.6-.3-2.5-.4zM41 3H1v2l2.1.2c1.6.3 2.7.9 3.4 1.8.7 1 1.1 2.6 1.2 4.8.8 10.8.8 20.9 0 30.2-.2 2.2-.6 3.8-1.2 4.8-.7 1-1.8 1.6-3.4 1.8l-2.1.3v2h25.8v-2l-2.7-.2c-1.6-.2-2.7-.9-3.4-1.8-.7-1-1.1-2.6-1.2-4.8-.3-4-.5-8.6-.5-13.7l5.4.1c2.9.1 4.9 2.3 5.9 6.7h2V18.9h-2c-1 4.3-2.9 6.5-5.9 6.6l-5.4.1c0-9 .2-15.4.5-19.3h7.9c5.6 0 9.4 3.6 11.6 10.8l2.4-.7L41 3zm-4.7 30.8c0 5.2 1.5 9.5 4.4 12.9 2.9 3.4 7.2 5 12.6 5s9.8-1.7 13-5.2c3.2-3.4 4.7-7.7 4.7-12.9s-1.5-9.5-4.4-12.9c-2.9-3.4-7.2-5-12.6-5s-9.8 1.7-13 5.2c-3.2 3.4-4.7 7.7-4.7 12.9zm22.3-11.4c1.2 2.9 1.7 6.7 1.7 11.3 0 10.6-2.2 15.8-6.5 15.8-2.2 0-3.9-1.5-5.1-4.5-1.2-3-1.7-6.8-1.7-11.3C47 23.2 49.2 18 53.5 18c2.2-.1 3.9 1.4 5.1 4.4zm84.5 24.3c3.3 3.3 7.5 5 12.5 5 3.1 0 5.8-.6 8.2-1.9 2.4-1.2 4.3-2.7 5.6-4.5l-1-1.2c-2.2 1.7-4.7 2.5-7.6 2.5-4 0-7.1-1.3-9.2-4-2.2-2.7-3.2-6.1-3-10.5H170c0-4.8-1.2-8.7-3.7-11.8-2.5-3-6-4.5-10.5-4.5-5.6 0-9.9 1.8-13 5.3-3.1 3.5-4.6 7.8-4.6 12.9 0 5.2 1.6 9.4 4.9 12.7zm7.4-25.1c1.1-2.4 2.5-3.6 4.4-3.6 3 0 4.5 3.8 4.5 11.5l-10.6.2c.1-3 .6-5.7 1.7-8.1zm46.4-4c-2.7-1.2-6.1-1.9-10.2-1.9-4.2 0-7.5 1.1-10 3.2s-3.8 4.7-3.8 7.8c0 2.7.8 4.8 2.3 6.3 1.5 1.5 3.9 2.8 7 3.9 2.8 1 4.8 2 5.8 2.9 1 1 1.6 2.1 1.6 3.6 0 1.4-.5 2.7-1.6 3.7-1 1.1-2.4 1.6-4.2 1.6-4.4 0-7.7-3.2-10-9.6l-1.7.5.4 10c3.6 1.4 7.6 2.1 12 2.1 4.6 0 8.1-1 10.7-3.1 2.6-2 3.9-4.9 3.9-8.5 0-2.4-.6-4.4-1.9-5.9-1.3-1.5-3.4-2.8-6.4-4-3.3-1.2-5.6-2.3-6.8-3.3-1.2-1-1.8-2.2-1.8-3.7s.4-2.7 1.3-3.7 2-1.4 3.4-1.4c4 0 6.9 2.9 8.7 8.6l1.7-.5-.4-8.6zm-96.2-.9c-1.4-.7-2.9-1-4.6-1-1.7 0-3.4.7-5.3 2.1-1.9 1.4-3.3 3.3-4.4 5.9l.1-8-15.2 3v1.4l1.5.1c1.9.2 3 1.7 3.2 4.4.6 6.2.6 12.8 0 19.8-.2 2.7-1.3 4.1-3.2 4.4l-1.5.2v1.9h21.2V49l-2.7-.2c-1.9-.2-3-1.7-3.2-4.4-.6-5.8-.7-12-.2-18.4.6-1 1.9-1.6 3.9-1.8 2-.2 4.3.4 6.7 1.8l3.7-9.3z" style="color:#181716;fill:#181716;stroke-width:1px;font-family:Graphik, sans-serif"></path></svg></div><div class="stamp" id="stamp"></div></div></header>
+<div id="app"></div>
+<script>
+const SUPABASE_URL = "https://eqcajylttihnfqhbenxh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_WioXQEWQLg8ahUod8uXHYg_B4qHhvJD";
+const REFRESH_MS = 10000;
+const app = document.getElementById("app");
+let pw = null, timer = null;
+try { pw = sessionStorage.getItem("fm_pw"); } catch (e) {}
+
+async function fetchStats(p) {
+  const res = await fetch(SUPABASE_URL + "/rest/v1/rpc/get_portal_stats", {
+    method: "POST", headers: { "apikey": SUPABASE_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_password: p })
+  });
+  if (!res.ok) throw new Error("http " + res.status);
+  return res.json();
+}
+
+function loginView(msg) {
+  app.innerHTML = `<div class="login"><h1 style="margin-top:0">Field Monitor</h1>
+    <p class="sub">Enter the access password to view live fieldwork progress.</p>
+    <input id="pw" type="password" placeholder="Password" autocomplete="current-password"/>
+    <div class="err" id="err">${msg || ""}</div>
+    <button class="btn" id="go">View progress</button></div>`;
+  const go = async () => {
+    const v = document.getElementById("pw").value;
+    if (!v) return;
+    document.getElementById("go").textContent = "Checking...";
+    try {
+      const d = await fetchStats(v);
+      if (d.status !== "ok") { loginView("That password is not correct."); return; }
+      pw = v; try { sessionStorage.setItem("fm_pw", v); } catch (e) {}
+      draw(d); startTimer();
+    } catch (e) { loginView("We could not connect. Please try again."); }
+  };
+  document.getElementById("go").onclick = go;
+  document.getElementById("pw").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+}
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const pct = (a, b) => b ? Math.min(100, Math.round(a / b * 100)) : 0;
+
+function rows(list, kind) {
+  return list.map(q => {
+    const isFull = q.completed >= q.target;
+    const flag = isFull ? `<span class="tag">${kind === "max" ? "At max" : "Full"}</span>` : "";
+    const hold = q.in_progress > 0 ? ` <small>+${q.in_progress} in progress</small>` : "";
+    return `<div class="row ${isFull ? "full" : ""}">
+      <div>${esc(q.label)}${flag}</div>
+      <div class="bar"><i style="width:${pct(q.completed, q.target)}%"></i></div>
+      <div class="num">${q.completed} <small>of ${q.target}</small>${hold}</div></div>`;
+  }).join("");
+}
+
+const PALETTE_OUT = { completed:"#181716", in_progress:"#7F7F7E", screened_out:"#B5B5B4", quota_full:"#8B1A1A", abandoned:"#DADAD9" };
+const PALETTE_IND = ["#181716", "#4D4C4B", "#7F7F7E", "#BDBDBC"];
+
+function donut(items, centerBig, centerSmall) {
+  const total = items.reduce((a, x) => a + x.value, 0);
+  const R = 40, C = 2 * Math.PI * R;
+  let off = 0, segs = "";
+  if (total > 0) {
+    items.filter(x => x.value > 0).forEach(x => {
+      const len = x.value / total * C;
+      segs += `<circle cx="50" cy="50" r="${R}" fill="none" stroke="${x.color}" stroke-width="16" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}"/>`;
+      off += len;
+    });
+  }
+  return `<div class="donut"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="${R}" fill="none" stroke="#7F7F7E1A" stroke-width="16"/>${segs}</svg>
+    <div class="c">${centerBig}<small>${centerSmall}</small></div></div>`;
+}
+const legend = items => `<div class="legend">${items.map(x => `<div><i style="background:${x.color}"></i>${esc(x.label)}<b>${x.value}</b></div>`).join("")}</div>`;
+
+function columns(list, short) {
+  const max = Math.max(1, ...list.map(q => q.target));
+  return `<div class="cols">${list.map(q => {
+      const h = Math.max(3, q.target / max * 100), fill = Math.min(100, q.target ? q.completed / q.target * 100 : 0);
+      return `<div class="colwrap"><div class="colnum">${q.completed}<small>/${q.target}</small></div>
+        <div class="colbox ${q.completed >= q.target ? "full" : ""}" style="height:${h}%"><i style="height:${fill}%"></i></div></div>`;
+    }).join("")}</div>
+    <div class="collabels">${list.map(q => `<span>${esc(short(q.label))}</span>`).join("")}</div>
+    <div class="legend-note"><span><i style="background:#181716"></i>Completes</span><span><i style="background:#7F7F7E1A;border:1px solid #7F7F7E33"></i>Target</span></div>`;
+}
+
+function draw(d) {
+  const t = d.totals, Q = d.quotas;
+  const by = k => Q.filter(q => q.dimension === k);
+  const ind = by("industry");
+  const total = ind.reduce((a, q) => a + q.target, 0);
+  const p = pct(t.completed, total);
+  const out = [
+    { label: "Completed", value: t.completed, color: PALETTE_OUT.completed },
+    { label: "In progress", value: t.in_progress, color: PALETTE_OUT.in_progress },
+    { label: "Screened out", value: t.screened_out, color: PALETTE_OUT.screened_out },
+    { label: "Quota full", value: t.quota_full, color: PALETTE_OUT.quota_full },
+    { label: "Abandoned", value: t.abandoned, color: PALETTE_OUT.abandoned }
+  ];
+  const mix = ind.map((q, i) => ({ label: q.label.replace(" (combined)", ""), value: q.completed, color: PALETTE_IND[i % 4] }));
+  const mixTotal = mix.reduce((a, x) => a + x.value, 0);
+  document.getElementById("stamp").textContent = "Updated " + new Date(d.generated_at).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+  const ringR = 42, ringC = 2 * Math.PI * ringR;
+  app.innerHTML = `<div class="col">
+    <div class="titlerow"><h1>Fieldwork progress</h1><button class="btn dl" id="dl">Download Excel</button></div>
+    <p class="sub">Trusted AI Benchmarking Survey. US only. Target N = ${total}.</p>
+    <div class="hero"><div class="left"><span class="big">${t.completed}</span><span class="of">of ${total} completes</span>
+      <div class="bar"><i style="width:${p}%"></i></div></div>
+      <div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="${ringR}" fill="none" stroke="#7F7F7E33" stroke-width="10"/>
+        <circle cx="50" cy="50" r="${ringR}" fill="none" stroke="#181716" stroke-width="10" stroke-linecap="butt" stroke-dasharray="${p / 100 * ringC} ${ringC}"/></svg>
+        <div class="c">${p}%</div></div></div>
+    <div class="tiles">
+      <div class="tile"><b>${t.in_progress}</b><span>In progress</span></div>
+      <div class="tile"><b>${t.screened_out}</b><span>Screened out</span></div>
+      <div class="tile"><b>${t.quota_full}</b><span>Quota full</span></div>
+      <div class="tile"><b>${t.abandoned}</b><span>Abandoned</span></div>
+      <div class="tile"><b>${t.entries}</b><span>Total entries</span></div>
+    </div>
+    <div class="charts">
+      <div class="panel"><h3>Fieldwork outcomes</h3><div class="donutwrap">${donut(out, t.entries, "entries")}${legend(out)}</div></div>
+      <div class="panel"><h3>Completes by industry</h3><div class="donutwrap">${donut(mix, mixTotal, "completes")}${legend(mix)}</div></div>
+    </div>
+    <h2>Industry (hard quotas)</h2><p class="note">Once a quota is full, further entrants in that industry are closed out.</p>
+    ${rows(ind, "hard")}
+    <h2>Annual revenue (soft quotas)</h2><p class="note">Tracked for balance. Not enforced.</p>
+    <div class="panel">${columns(by("revenue"), l => l.replace(" or more", "+"))}</div>
+    <h2>Seniority / title (soft quotas)</h2><p class="note">Tracked for balance. Not enforced.</p>
+    ${rows(by("seniority"), "soft")}
+    <h2>Other industries, individual maximums (soft)</h2><p class="note">Maximum per industry within the combined "Other industries" quota.</p>
+    ${rows(by("other_industry"), "max")}
+    ${d.repeat_devices > 0 ? `<p class="note" style="margin-top:28px">Devices used for more than one entry: ${d.repeat_devices}</p>` : ""}
+    <div class="endspace"></div></div>`;
+  document.getElementById("dl").onclick = () => downloadXlsx(d);
+}
+
+
+// ---------- Excel export (no outside libraries) ----------
+const CRC_T = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files) {
+  const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+  files.forEach(f => {
+    const name = enc.encode(f.name), data = enc.encode(f.text), crc = crc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, 0, true); lh.setUint16(12, 0x21, true); lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true);
+    lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+    parts.push(new Uint8Array(lh.buffer), name, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+    ch.setUint16(10, 0, true); ch.setUint16(12, 0, true); ch.setUint16(14, 0x21, true); ch.setUint32(16, crc, true);
+    ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, name.length, true);
+    ch.setUint32(42, off, true);
+    cen.push(new Uint8Array(ch.buffer), name);
+    off += 30 + name.length + data.length;
+  });
+  let cenSize = 0; cen.forEach(p => cenSize += p.length);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, cenSize, true); end.setUint32(16, off, true);
+  return new Blob([...parts, ...cen, new Uint8Array(end.buffer)], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+const xe = v => String(v).replace(/[<>&"']/g, c => ({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;", "'":"&apos;" }[c]));
+const COLS = "ABCDEF";
+// style ids: 0 normal, 1 bold, 2 header (white on dark), 3 percent, 4 title
+function sheetXml(rows) {
+  const body = rows.map((r, i) => `<row r="${i + 1}">` + r.map((c, j) => {
+    if (c === null || c === undefined || c === "") return "";
+    const ref = COLS[j] + (i + 1), v = typeof c === "object" ? c.v : c, st = typeof c === "object" ? c.s : 0;
+    return typeof v === "number" ? `<c r="${ref}" s="${st}"><v>${v}</v></c>` : `<c r="${ref}" s="${st}" t="inlineStr"><is><t>${xe(v)}</t></is></c>`;
+  }).join("") + `</row>`).join("");
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols><col min="1" max="1" width="44" customWidth="1"/><col min="2" max="5" width="16" customWidth="1"/><col min="6" max="6" width="14" customWidth="1"/></cols><sheetData>${body}</sheetData></worksheet>`;
+}
+const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="4"><font><sz val="10"/><name val="Arial"/></font><font><b/><sz val="10"/><name val="Arial"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Arial"/></font><font><b/><sz val="14"/><name val="Arial"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF181716"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="2" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="9" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+
+function downloadXlsx(d) {
+  const t = d.totals, Q = d.quotas, by = k => Q.filter(q => q.dimension === k);
+  const target = by("industry").reduce((a, q) => a + q.target, 0);
+  const H = (...h) => h.map(x => ({ v: x, s: 2 }));
+  const P = (a, b) => ({ v: b ? a / b : 0, s: 3 });
+  const rows = [
+    [{ v: "Trusted AI Benchmarking Survey: fieldwork numbers", s: 4 }],
+    ["Generated", new Date(d.generated_at).toLocaleString()],
+    [],
+    H("Overall", "Count"),
+    ["Completes", t.completed], ["Target (N)", target], ["Completes as % of target", P(t.completed, target)],
+    ["In progress", t.in_progress], ["Screened out", t.screened_out], ["Quota full", t.quota_full],
+    ["Abandoned", t.abandoned], ["Total entries", t.entries]
+  ];
+  const block = (title, list, hard, max) => {
+    rows.push([], H(title, "Completes", "In progress", max ? "Maximum" : "Target", "% of target", "Status"));
+    list.forEach(q => rows.push([q.label, q.completed, q.in_progress, q.target, P(q.completed, q.target),
+      q.completed >= q.target ? (max ? "At max" : "Full") : "Open"]));
+    rows.push([{ v: "Total", s: 1 }, { v: list.reduce((a, q) => a + q.completed, 0), s: 1 }, { v: list.reduce((a, q) => a + q.in_progress, 0), s: 1 },
+      max ? "" : { v: list.reduce((a, q) => a + q.target, 0), s: 1 }]);
+  };
+  block("Industry (hard quotas)", by("industry"));
+  block("Annual revenue (soft quotas)", by("revenue"));
+  block("Seniority / title (soft quotas)", by("seniority"));
+  block("Other industries, individual maximums (soft)", by("other_industry"), false, true);
+  const files = [
+    { name: "[Content_Types].xml", text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>` },
+    { name: "_rels/.rels", text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>` },
+    { name: "xl/workbook.xml", text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Fieldwork numbers" sheetId="1" r:id="rId1"/></sheets></workbook>` },
+    { name: "xl/_rels/workbook.xml.rels", text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>` },
+    { name: "xl/styles.xml", text: STYLES },
+    { name: "xl/worksheets/sheet1.xml", text: sheetXml(rows) }
+  ];
+  const now = new Date(), p2 = n => String(n).padStart(2, "0");
+  const fname = `Fieldwork_Numbers_${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}_${p2(now.getHours())}${p2(now.getMinutes())}.xlsx`;
+  const url = URL.createObjectURL(zipStore(files));
+  const a = document.createElement("a"); a.href = url; a.download = fname; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+}
+
+function startTimer() {
+  clearInterval(timer);
+  timer = setInterval(async () => {
+    try { const d = await fetchStats(pw); if (d.status === "ok") draw(d); } catch (e) { /* keep last view; retry next tick */ }
+  }, REFRESH_MS);
+}
+
+(async function init() {
+  if (!pw) { loginView(); return; }
+  try {
+    const d = await fetchStats(pw);
+    if (d.status !== "ok") { loginView(); return; }
+    draw(d); startTimer();
+  } catch (e) { loginView("We could not connect. Please try again."); }
+})();
+</script>
+</body>
+</html>

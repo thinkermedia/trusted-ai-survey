@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Trusted AI Benchmarking Survey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@500;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #181716;
+    --grey: #7F7F7E;
+    --paper: #FCFCFC;
+    --grey-10: #7F7F7E1A;
+    --grey-20: #7F7F7E33;
+    --radius: 2px;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Work Sans", -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  #app {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .col { max-width: 640px; width: 100%; margin: 0 auto; padding: 0 24px; }
+  .topbar {
+    position: sticky;
+    top: 0;
+    padding: calc(18px + env(safe-area-inset-top, 0px)) 0 16px;
+    background: var(--paper);
+    border-bottom: 8px solid var(--ink);
+    z-index: 5;
+  }
+  .brand { margin-bottom: 14px; }
+  .logo { height: 22px; width: auto; display: block; }
+  .progress-track {
+    height: 4px;
+    background: var(--grey-20);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--ink);
+    transition: width 0.3s ease;
+  }
+  .card {
+    flex: 1;
+    max-width: 640px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 44px 24px 120px;
+  }
+  .meta { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .section-name { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .qid-pill {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+    border-radius: 3px;
+    padding: 2px 9px;
+    letter-spacing: 0.02em;
+  }
+  .eyebrow-brand {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+    margin-bottom: 8px;
+  }
+  .prompt {
+    font-family: "Roboto Slab", serif;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1.32;
+    margin: 0 0 10px;
+    max-width: none;
+  }
+  .instruction {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--grey-10);
+    border: 1px solid var(--grey-20);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin: 4px 0 8px;
+    display: inline-block;
+  }
+  .options { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
+  .opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--grey-20);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .opt { position: relative; }
+  .opt:hover { border-color: var(--ink); }
+  .opt.selected { border-color: var(--ink); background: var(--grey-10); }
+  .opt.disabled { opacity: 0.4; cursor: not-allowed; }
+  .opt input { margin-top: 3px; accent-color: var(--ink); flex-shrink: 0; }
+  .opt-label { font-size: 15.5px; line-height: 1.45; }
+  .opt-grid { display: flex; flex-direction: column; gap: 10px; }
+
+  .ladder-opt { align-items: flex-start; }
+
+  .fninfo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    font-size: 13px;
+    font-weight: 700;
+    font-style: italic;
+    font-family: Georgia, serif;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 50%;
+    margin-left: 6px;
+    position: static;
+    cursor: pointer;
+    vertical-align: middle;
+    box-shadow: 0 0 0 3px var(--grey-20);
+  }
+  .fninfo:hover, .fninfo:focus { box-shadow: 0 0 0 4px var(--grey); outline: none; }
+  .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    width: auto;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 13.5px;
+    line-height: 1.55;
+    font-style: normal;
+    font-weight: 400;
+    font-family: "Work Sans", sans-serif;
+    padding: 14px 16px;
+    border-radius: 3px;
+    z-index: 10;
+    text-align: left;
+  }
+  .fninfo:hover .tooltip, .fninfo:focus .tooltip, .fninfo.open .tooltip { display: block; }
+
+  .tag-panel {
+    margin-top: 18px;
+    padding: 18px 20px;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    background: var(--grey-10);
+  }
+  .tag-label { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--ink); }
+  .tag-choices { display: flex; gap: 12px; flex-wrap: wrap; }
+  .tag-pill {
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 12px 28px;
+    min-width: 140px;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .tag-pill.active { background: var(--ink); color: var(--paper); }
+
+  .chips { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 6px; }
+  .chip {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    border: 1.5px solid var(--grey);
+    border-radius: 3px;
+    padding: 6px 12px;
+    background: var(--paper);
+  }
+  .chip b { font-weight: 700; margin-right: 6px; }
+  .chip.full { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .dual-chips { margin-top: 16px; }
+  .group-label {
+    font-size: 15px;
+    color: var(--ink);
+    margin: 18px 0 2px;
+    font-weight: 600;
+  }
+  .group-divider { height: 1px; background: var(--grey-20); margin: 10px 0; }
+
+  .dual-head { display: grid; grid-template-columns: 1fr 80px 80px; gap: 10px; margin-bottom: 6px; align-items: end; }
+  .dual-colhead { line-height: 1.25; font-size: 14px; font-weight: 700; color: var(--ink); text-align: center; border-bottom: 3px solid var(--ink); padding-bottom: 6px; }
+  .dual-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 80px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--grey-20);
+  }
+  .dual-label { font-size: 14.5px; line-height: 1.4; }
+  .dual-cell { display: flex; justify-content: center; }
+  .dual-cb { width: 18px; height: 18px; accent-color: var(--ink); }
+
+  .other-input {
+    margin-top: 14px;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--grey-20);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 15px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .other-input:focus { outline: none; border-color: var(--ink); }
+
+  .navbar {
+    position: sticky;
+    bottom: 0;
+    background: var(--paper);
+    border-top: 1px solid var(--grey-20);
+    padding: 16px 0 calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .warn {
+    color: #8B1A1A;
+    background: #8B1A1A12;
+    border: 1.5px solid #8B1A1A;
+    border-radius: 3px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 14.5px;
+    font-weight: 500;
+    line-height: 1.45;
+  }
+  .warn[hidden] { display: none; }
+  .navinner { display: flex; align-items: center; justify-content: space-between; }
+  .stepcount { font-size: 13px; color: var(--grey); }
+  .btn {
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 12px 26px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 1px solid var(--ink);
+  }
+  .btn.primary { background: var(--ink); color: var(--paper); }
+  .btn.primary:disabled { background: var(--grey-20); border-color: var(--grey-20); color: var(--grey); cursor: not-allowed; }
+  .btn.ghost { background: transparent; color: var(--ink); }
+  .btn.ghost:disabled { opacity: 0.3; cursor: not-allowed; border-color: var(--grey-20); color: var(--grey); }
+
+
+  .page { padding-bottom: 64px; }
+  .headline {
+    font-family: "Roboto Slab", serif;
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 1.15;
+    margin: 6px 0 22px;
+    max-width: 24ch;
+  }
+  .lede {
+    font-family: "Roboto Slab", serif;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 1.5;
+    margin: 0 0 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--grey-20);
+  }
+  .page .body {
+    font-size: 17px;
+    line-height: 1.7;
+    margin: 0 0 18px;
+    max-width: 100%;
+  }
+  .notice {
+    margin: 32px 0 32px;
+    padding: 20px 22px;
+    border: 1px solid var(--ink);
+    background: var(--grey-10);
+    border-radius: var(--radius);
+  }
+  .notice-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .notice p { margin: 0; font-size: 15px; line-height: 1.6; }
+  .start { padding: 14px 34px; }
+  @media (max-width: 480px) { .headline { font-size: 32px; } .lede { font-size: 18px; } }
+
+  .complete { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; min-height: 60vh; }
+
+  @media (max-width: 480px) {
+    .prompt { font-size: 22px; max-width: none; }
+    .card { padding: 28px 18px 120px; }
+    .col { padding: 0 18px; }
+    .dual-head, .dual-row { grid-template-columns: 1fr 76px 76px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// Forbes Insights x KPMG Trusted AI Benchmarking Survey 2026
+// Question bank — data-driven engine renders from this array.
+
+const FOOTNOTES = {
+  highrisk: "An AI system is one that either serves as a safety component in regulated products or is used in specific high-stakes areas (biometrics, critical infrastructure, education, employment, public services, law enforcement, migration and border control, and democratic processes) that could seriously affect the health, safety, or fundamental rights of individuals.",
+  material: "The degree to which an AI system, AI-related risk, or AI-enabled decision could reasonably be expected to influence business outcomes, stakeholder decisions, regulatory obligations, financial performance, or impacts on individuals."
+};
+
+function ladder(id, section, prompt, opts, hover) {
+  return { id, section, type: "ladder", prompt, options: opts, hover: hover || null };
+}
+
+const QUESTIONS = [
+  // ---------------- Section 1: Organizational Profile ----------------
+  {
+    id: "P-01", section: 1, type: "single",
+    prompt: "Which industry best describes your organization?",
+    other: true,
+    options: [
+      ["A","Consumer & Retail"], ["B","Financial Services"], ["C","Insurance"],
+      ["D","Healthcare & Life Sciences"], ["E","Technology, Media & Telecom"],
+      ["F","Industrial Manufacturing"], ["G","Energy, Utilities & Resources"],
+      ["H","Automotive & Mobility"], ["I","Public Sector & Government"],
+      ["J","Professional & Business Services"], ["K","Other (please specify)"]
+    ]
+  },
+  {
+    id: "P-02", section: 1, type: "multi", max: 99,
+    prompt: "In which region(s) does your organization operate? Select all that apply.",
+    options: [
+      ["A","North America"], ["B","Latin America"], ["C","UK & Ireland"],
+      ["D","Europe (excl. UK)"], ["E","Middle East & Africa"], ["F","Asia-Pacific"]
+    ]
+  },
+  {
+    id: "P-03", section: 1, type: "single",
+    prompt: "What was your organization's approximate annual revenue in its most recently completed fiscal year?",
+    options: [
+      ["A","$1B to <$5B"], ["B","$5B to <$10B"], ["C","$10B to <$25B"],
+      ["D","$25B to <$50B"], ["E","$50B or more"], ["F","Prefer not to say / unknown"]
+    ]
+  },
+  {
+    id: "P-04", section: 1, type: "single",
+    prompt: "Which best describes your role?",
+    other: true,
+    options: [
+      ["A","Chief Executive Officer / President (CEO)"], ["B","Chief Operating Officer (COO)"],
+      ["C","Chief Information Officer (CIO)"], ["D","Chief Technology Officer (CTO)"],
+      ["E","Head of Engineering"], ["F","Chief Data Officer (CDO)"],
+      ["G","Chief AI Officer (CAIO)"], ["H","Head of Responsible AI"],
+      ["I","Chief Risk Officer (CRO)"], ["J","Chief Compliance Officer (CCO)"],
+      ["K","Chief Security Officer (CISO)"], ["L","Chief Privacy Officer (CPO)"],
+      ["M","General Counsel / Chief Legal Officer"], ["N","Chief Ethics Officer"],
+      ["O","Head of Internal Audit"], ["P","Board member / Non-executive Director"],
+      ["Q","Other senior leader (please specify)"]
+    ]
+  },
+  {
+    id: "P-05", section: 1, type: "single_tag",
+    prompt: "What percentage of your total AI investment is allocated specifically to Responsible AI?",
+    sub: "Indicate whether this figure is tracked or estimated.",
+    options: [
+      ["A","0–5%"], ["B","6–10%"], ["C","11–20%"],
+      ["D","21–30%"], ["E","More than 30%"], ["F","Unknown / not tracked"]
+    ],
+    tagOptions: [["tracked","Tracked"], ["estimated","Estimated"]],
+    tagSkipFor: ["F"]
+  },
+  {
+    id: "P-06", section: 1, type: "single",
+    prompt: "Does your organization develop or commercialize AI-enabled products or services for external customers, use AI only internally, or both?",
+    options: [
+      ["A","We develop / commercialize AI-enabled products or services for external customers"],
+      ["B","We use AI only internally"],
+      ["C","Both — we build external AI products and use AI internally"],
+      ["D","Neither / not applicable"]
+    ]
+  },
+
+  // ---------------- Section 2: Strategy, Governance & Overall Maturity ----------------
+  ladder("G-01", 2, "How would you describe the maturity of your organization's Responsible AI strategy?", [
+    ["A","No defined Responsible AI strategy exists."],
+    ["B","An emerging strategy exists in parts of the business but is not unified or owned."],
+    ["C","A documented enterprise strategy exists with a named executive owner."],
+    ["D","The strategy is funded and cascaded across business units."],
+    ["E","The strategy is executed enterprise-wide, continuously refreshed, and tracked against measurable outcomes."]
+  ]),
+  {
+    id: "G-02", section: 2, type: "single", other: true,
+    prompt: "What is the primary driver for pursuing Responsible AI efforts at your organization?",
+    options: [
+      ["A","Enhancing internal governance and ethical standards"],
+      ["B","Mitigating legal, financial, or reputational risk"],
+      ["C","Complying with current or anticipated regulations (e.g., EU AI Act)"],
+      ["D","Building customer trust and competitive differentiation"],
+      ["E","Responding to pressure from investors or board members"],
+      ["F","Other (please specify)"]
+    ]
+  },
+  ladder("G-03", 2, "How would you best describe the maturity of your AI governance body (e.g., council or oversight committee)?", [
+    ["A","No formal governance body exists."],
+    ["B","Cross-functional discussions occur informally, but no chartered body exists."],
+    ["C","A chartered governance body exists with minimal enforcement."],
+    ["D","The governance body has authority to approve or halt high-risk AI use."],
+    ["E","AI risk is reported to and overseen by the board or an equivalent executive committee."]
+  ]),
+  ladder("G-04", 2, "How would you describe the maturity of your organization's formal AI policy or use guidelines?", [
+    ["A","No formal AI policy or employee AI use guidelines exist."],
+    ["B","AI expectations exist only informally or scattered across unrelated policies and are not tailored to specific technologies."],
+    ["C","A dedicated AI policy or set of guidelines is drafted but not yet formally approved or published enterprise-wide."],
+    ["D","A formal, published AI policy or guidelines defines required controls and is enforced for known AI systems."],
+    ["E","Policy and/or guidelines are embedded across the enterprise, continuously refreshed, role-specific, and measured for effectiveness."]
+  ]),
+  ladder("G-05", 2, "How mature is your organization's approach to conducting AI impact assessments and risk assessments throughout the AI lifecycle?", [
+    ["A","AI impact and risk assessments are not performed consistently, or only occur in limited circumstances."],
+    ["B","Basic impact and risk assessments are performed for some AI systems using informal processes or templates."],
+    ["C","Standardized AI impact and risk assessments are required for higher-risk use cases and are integrated into development, procurement, or deployment processes."],
+    ["D","AI impact and risk assessments are supported by defined controls, governance oversight, and documented remediation activities, with ongoing reassessment throughout the AI lifecycle."],
+    ["E","AI impact and risk assessments are continuously monitored and enhanced through automation or AI-enabled capabilities, with controls dynamically adapting to emerging risks and organizational risk tolerance."]
+  ]),
+  Object.assign(
+    ladder("G-06", 2, "How mature is your integration of Responsible AI into the product development lifecycle for the AI-enabled products or services you build?", [
+      ["A","Responsible AI is not considered in the product development lifecycle."],
+      ["B","Responsible AI is addressed reactively, late in development or at launch."],
+      ["C","Responsible AI checkpoints exist for selected high-risk products."],
+      ["D","Responsible AI requirements are embedded across the product lifecycle with defined gates."],
+      ["E","Responsible AI requirements, testing and sign-off are automated into the product pipeline."]
+    ]),
+    { showIf: (a) => a["P-06"] && (a["P-06"].value === "A" || a["P-06"].value === "C") }
+  ),
+  ladder("G-07", 2, "How prepared is your organization to meet current and emerging AI regulations (e.g., EU AI Act, sectoral AI rules)?", [
+    ["A","AI regulatory obligations are not tracked or assessed."],
+    ["B","Awareness exists, but no systematic mapping of obligations to AI systems."],
+    ["C","Applicable regulations are identified and mapped to selected high-risk AI systems.","highrisk"],
+    ["D","A compliance program maps obligations to controls across material AI systems, with defined ownership.","material"],
+    ["E","The organization takes a proactive approach to AI regulatory readiness, anticipating and adapting to emerging requirements before they materially impact operations."]
+  ]),
+  Object.assign(
+    {
+      id: "G-08", section: 2, type: "single", other: true,
+      prompt: "Where does primary accountability for the Responsible AI program sit? (Select one)",
+      options: [
+        ["A","IT / CIO organization"], ["B","Data or AI organization (CDO / CAIO)"],
+        ["C","Risk, compliance, legal, or ethics"], ["D","Product or business organization"],
+        ["E","Security / cybersecurity"], ["F","Shared across multiple functions"], ["G","Other"]
+      ]
+    },
+    { showIf: (a) => a["G-01"] && ["C","D","E"].includes(a["G-01"].value) }
+  ),
+
+  // ---------------- Section 3: Data and Visibility ----------------
+  ladder("T-01", 3, "How would you describe the maturity of the data foundation underpinning your AI systems?", [
+    ["A","Data used in AI is not governed; quality, sourcing, and permitted use are unmanaged."],
+    ["B","Enterprise data governance is applied but has not been adapted to address novel AI data requirements (e.g., training data provenance, unstructured and retrieval sources, model drift)."],
+    ["C","Data quality, lineage, and permitted-use rules are documented and applied to selected AI systems, largely covering structured data."],
+    ["D","Data used in AI is governed across all material systems — assessed for accuracy, completeness and relevance, with documented provenance and rights to use, extending to unstructured and retrieval sources."],
+    ["E","Data quality, lineage and drift are continuously monitored in production, with issues routed to governance forums and the data foundation improved based on what monitoring finds."]
+  ]),
+  ladder("T-02", 3, "How mature is your organization's ability to explain and interpret AI system outputs, recommendations, or decisions?", [
+    ["A","AI outputs cannot be explained or traced to the factors that influenced them; explanation documentation and decision records do not exist."],
+    ["B","Explainability is addressed ad hoc for individual systems when questions arise, relying on manual analysis or expert judgment."],
+    ["C","Explainability capabilities are documented for selected AI systems, supported by artefacts such as model or system cards, but practices are not applied consistently."],
+    ["D","Explainability is standardized across all material AI systems, with documentation, bias and fairness transparency, and decision audit trails maintained, and explanations tailored to the intended use case, context, and audience.","material"],
+    ["E","Explainability is embedded across the AI lifecycle, continuously maintained, independently validated, and reported to support governance, assurance, and stakeholder trust."]
+  ]),
+  ladder("T-03", 3, "How would you describe the maturity of your AI inventory (visibility into where AI is used across the company)?", [
+    ["A","No inventory exists; the organization does not know where AI is used."],
+    ["B","Visibility is limited to informal, team-level knowledge with no central record."],
+    ["C","A centralized inventory covers selected or known, high-visibility systems."],
+    ["D","An enterprise-wide inventory captures all known AI systems, ownership, data sources, and purpose."],
+    ["E","The inventory is continuously updated through automated discovery tooling, integrated with intake and risk-tiering, and used to govern the lifecycle."]
+  ]),
+  ladder("T-04", 3, "How does your organization discover and govern unsanctioned or 'shadow' AI tools and agents?", [
+    ["A","No formal process exists to identify, govern, or restrict unauthorized AI use."],
+    ["B","Discovery relies on self-reporting, manager oversight, surveys, or periodic reviews."],
+    ["C","Technical monitoring identifies unauthorized AI tools, models, services, or agent activity."],
+    ["D","Automated discovery is combined with approval workflows, risk assessment, and preventive controls."],
+    ["E","Continuous discovery, automated enforcement, hard blocks, and independent review operate across the organization."]
+  ]),
+
+  // ---------------- Section 4: Workforce & AI Literacy ----------------
+  ladder("W-01", 4, "How prepared is your workforce to oversee and remain accountable for increasingly autonomous AI systems?", [
+    ["A","No defined skills, roles, or expectations for overseeing AI; oversight is largely unmanaged."],
+    ["B","Awareness exists, but oversight roles and required skills have not been formally redefined."],
+    ["C","Selected roles have AI-oversight responsibilities (e.g., reviewing agent outputs), applied inconsistently."],
+    ["D","Roles are formally redesigned for AI/agent oversight, with defined skills and manager-accountability expectations."],
+    ["E","Oversight readiness is continuously measured and roles/skills are proactively updated as autonomy increases."]
+  ]),
+  ladder("W-02", 4, "How would you describe the maturity of your Responsible AI training program?", [
+    ["A","No formal Responsible AI training exists for employees."],
+    ["B","Training is optional or inconsistent."],
+    ["C","Mandatory training is deployed to selected populations."],
+    ["D","Mandatory training is enterprise-wide with tracked completion."],
+    ["E","Training is continuously refreshed, role-specific, and measured for effectiveness."]
+  ]),
+
+  // ---------------- Section 5: Agentic and Autonomous AI ----------------
+  ladder("AG-01", 5, "How would you describe the maturity of your agentic AI strategy and governance alignment?", [
+    ["A","No defined agentic AI strategy exists; agentic use is unmanaged."],
+    ["B","Agentic use is emerging, but governance has not been adapted to agent-specific risks."],
+    ["C","An initial agentic strategy exists with limited governance updates (e.g., basic agent classification)."],
+    ["D","A formal agentic strategy is aligned with governance, including risk-tiering and controls for agent archetypes."],
+    ["E","Agentic strategy and governance are fully integrated, refreshed, and enforced across the agent lifecycle."],
+    ["F","N/a, we have not deployed AI agents."]
+  ]),
+  ladder("AG-02", 5, "How does your organization manage AI agents and other non-human identities?", [
+    ["A","No formal management exists."],
+    ["B","Agents use shared service accounts or credentials."],
+    ["C","Agents are registered and use unique identities."],
+    ["D","Agent identities are governed through Identity & Access Management/Privileged Access Management processes with approval workflows."],
+    ["E","Agent identities are continuously monitored with behavioral analytics, least privilege enforcement, and automated credential lifecycle management."],
+    ["F","N/a, we have not deployed AI agents."]
+  ]),
+  ladder("AG-03", 5, "How does your organization monitor AI agent behavior after deployment?", [
+    ["A","AI agent behavior is not monitored in production."],
+    ["B","Monitoring occurs only when users report issues."],
+    ["C","Outputs or logs are periodically reviewed for selected use cases."],
+    ["D","Agent actions, exceptions, and threshold breaches are continuously monitored via observability tooling."],
+    ["E","Real-time automated monitoring and remediation occurs, including anomaly detection, alerts, and audit trails."],
+    ["F","N/a, we have not deployed AI agents."]
+  ]),
+  ladder("AG-04", 5, "How does your organization operationalize human oversight of AI decisions?", [
+    ["A","No defined human-oversight criteria exist."],
+    ["B","Oversight requirements are decided by individual teams case-by-case."],
+    ["C","An enterprise human-in-the-loop policy applies to selected cases."],
+    ["D","Oversight requirements are consistently applied across the organization with clear accountability for oversight decisions."],
+    ["E","Oversight effectiveness is measured and improved based on incidents and performance."]
+  ]),
+  ladder("AG-05", 5, "How can your organization restrict, pause, or shut down an autonomous AI system?", [
+    ["A","No shutdown or pause process exists."],
+    ["B","Shutdown requires manual coordination across teams."],
+    ["C","Basic pause or rollback procedures exist for high-risk systems."],
+    ["D","Defined kill switches, thresholds, and escalation processes exist for high-risk systems."],
+    ["E","Shutdown and containment procedures are automated and regularly tested for all high-risk systems."],
+    ["F","N/a, we do not operate autonomous AI systems."]
+  ]),
+
+  // ---------------- Section 6: Control Testing, Risk Mitigation, and Security ----------------
+  ladder("RM-01", 6, "How does your organization manage the risk of third-party, vendor, and foundation-model AI it relies on?", [
+    ["A","Third-party and vendor AI risk is not separately assessed."],
+    ["B","Ad hoc reviews occur, but there is no standard for AI-specific vendor risk."],
+    ["C","Selected high-risk AI vendors/models undergo due diligence (e.g., security, data use, provenance)."],
+    ["D","A standard process assesses AI vendors and models across material systems, with contractual controls and ongoing review."],
+    ["E","Third-party AI risk is continuously monitored, with model provenance, evaluations, and supply-chain controls integrated into governance."]
+  ]),
+  ladder("RM-02", 6, "How would you describe the maturity of your AI testing and evaluation practices (e.g., red-teaming, model or system cards, pre-deployment testing)?", [
+    ["A","AI systems are not formally tested or evaluated before or after deployment."],
+    ["B","Testing is informal and inconsistent, performed ad hoc with no standard methodology."],
+    ["C","Selected high-risk systems undergo basic testing, but there is no consistent process."],
+    ["D","A defined testing program covers material systems, including monitoring for model drift, structured red-teaming, and standardized transparency reports (e.g., system cards or model cards)."],
+    ["E","Testing is continuous and embedded — for example, independent red-teaming, robust automated testing that includes edge cases, and version-controlled system cards."]
+  ]),
+  ladder("RM-03", 6, "To what extent is Internal Audit or another independent assurance function involved in AI oversight?", [
+    ["A","No involvement."], ["B","Informal consultation only."], ["C","Periodic reviews."],
+    ["D","Regular assurance engagements."], ["E","Continuous or risk-triggered independent assurance coverage."]
+  ]),
+  ladder("RM-04", 6, "How mature are your defenses against AI misuse, manipulation, and adversarial attack (e.g., prompt injection, jailbreaks, data poisoning, model/tool abuse)?", [
+    ["A","AI-specific misuse and adversarial risks are not formally assessed."],
+    ["B","Risks are discussed by technical/security teams but not addressed through formal controls."],
+    ["C","Controls address selected risks (e.g., prompt injection, data leakage) for high-risk systems."],
+    ["D","Threat modeling, adversarial testing, and security controls cover material AI systems.","material"],
+    ["E","AI threat models are refreshed on a defined cycle and integrated into enterprise cyber operations."]
+  ]),
+
+  // ---------------- Section 7: AI Safety Incidents ----------------
+  {
+    id: "IN-01", section: 7, type: "single",
+    prompt: "During the past 12 months, how many AI-related incidents (e.g., model failures, harmful outputs, bias, security events, unauthorized AI use, or governance violations) has your organization identified or experienced?",
+    options: [
+      ["A","None identified"], ["B","1–2"], ["C","3–5"], ["D","6–10"],
+      ["E","More than 10"], ["F","Unknown / not tracked"]
+    ]
+  },
+  Object.assign(
+    {
+      id: "IN-02", section: 7, type: "multi", max: 3, other: true,
+      prompt: "Which factors were the primary drivers of your AI-related incidents in the past 12 months? Select up to three.",
+      options: [
+        ["A","Model failure or unexpected behavior"], ["B","Human error in deployment or use"],
+        ["C","Process or governance failure"], ["D","Data quality issues"],
+        ["E","Data privacy breach"], ["F","Cybersecurity or adversarial activity"],
+        ["G","Third-party or vendor issue"], ["H","Insufficient AI skills, training, or user awareness"],
+        ["I","Other (please specify)"]
+      ]
+    },
+    { showIf: (a) => a["IN-01"] && ["B","C","D","E"].includes(a["IN-01"].value) }
+  ),
+  ladder("IN-03", 7, "How does your organization manage AI safety incidents or unexpected agent/model behavior?", [
+    ["A","AI safety incidents are not separately identified or tracked."],
+    ["B","Incidents are handled through general technology or operational processes."],
+    ["C","AI-related incidents are logged and escalated for selected systems."],
+    ["D","A formal AI incident-response process defines thresholds, roles, communications, and remediation."],
+    ["E","Incident management includes tabletop exercises, leadership scenarios, root-cause analysis, and continuous improvement."]
+  ]),
+
+  // ---------------- Section 8: Measurement, External Signals & Certification ----------------
+  {
+    id: "EX-01", section: 8, type: "multi_grouped", max: 3, other: true, noneOption: "I",
+    prompt: "Which of the following does your organization use to track Responsible AI progress? Select up to three.",
+    groups: [
+      { label: "Activity and coverage measures", options: [
+        ["A","% of AI systems completing a formal Responsible AI assessment"],
+        ["B","% of AI systems with documented human oversight and accountability"]
+      ]},
+      { label: "Outcome and effectiveness measures", options: [
+        ["C","Number of AI-related incidents, failures, or policy violations"],
+        ["D","Mean time to detect and remediate AI incidents"],
+        ["E","% of AI systems meeting fairness, bias, safety, or performance thresholds"],
+        ["F","Business value enabled by Responsible AI controls (e.g., reduced rework, faster approvals, avoided incidents)"]
+      ]},
+      { label: "Governance and reporting", options: [
+        ["G","Responsible AI performance is reported to executive leadership or the board on a defined cadence"],
+        ["H","Other (please specify)"]
+      ]},
+      { label: null, options: [
+        ["I","None, we do not formally track Responsible AI progress"]
+      ]}
+    ]
+  },
+  ladder("EX-02", 8, "What is your organization's current status regarding AI-related certifications, attestations, or external assessments (e.g., ISO 42001, AIUC-1, SOC 2)?", [
+    ["A","No plans to pursue them."], ["B","Monitoring relevant developments."],
+    ["C","Planning a future certification, attestation, or assessment."],
+    ["D","An effort is underway."],
+    ["E","One or more certifications, attestations, or assessments have been completed."]
+  ]),
+  ladder("EX-03", 8, "What Responsible AI transparency information does your organization provide to external stakeholders?", [
+    ["A","No formal transparency information is provided."],
+    ["B","Information is shared only upon request."],
+    ["C","Basic disclosures are available for selected AI systems or products."],
+    ["D","Standardized transparency/trust reports are maintained for material systems (e.g., model/system cards, governance disclosures)."],
+    ["E","Public or customer-facing transparency reporting covers governance, risk, ESG, and assurance activities."]
+  ]),
+
+  // ---------------- Section 9: Future & Emerging Risk ----------------
+  {
+    id: "FR-01", section: 9, type: "dual_multi", max: 3, other: true, noneOption: "M",
+    prompt: "Which of the following risks or potential negative impacts of AI are currently of greatest concern to your organization's leadership? What about in 3 years?",
+    sub: "Select up to 3 in each column.",
+    columns: ["Today", "In 3 years"],
+    options: [
+      ["A","Intellectual property infringement & proprietary data leakage (e.g., confidential data ingested into public/third-party models)"],
+      ["B","Model hallucination, inaccuracies, & unreliability (e.g., erroneous outputs impacting critical business operations)"],
+      ["C","Cybersecurity vulnerabilities & adversarial attacks (e.g., prompt injection, model inversion, jailbreaking)"],
+      ["D","Algorithmic bias, unfairness, & discrimination (e.g., biased outcomes in hiring, lending, or healthcare)"],
+      ["E","Lack of explainability & transparency (e.g., \"black-box\" models impeding auditability or regulatory defense)"],
+      ["F","Autonomous agent failure & multi-agent ecosystems operating without proper safeguards"],
+      ["G","\"Runaway AI\" and loss of human oversight (e.g., multi-agent systems executing unauthorized actions)"],
+      ["H","Reputational damage & brand erosion (e.g., deepfakes, public backlash, consumer distrust)"],
+      ["I","Vendor & third-party AI supply chain risk (e.g., lack of visibility into embedded AI capabilities)"],
+      ["J","Safety and governance risks from physical AI and robotics operating in real-world environments"],
+      ["K","AI capabilities advancing faster than governance and controls can adapt"],
+      ["L","Other (please specify)"],
+      ["M","Unable to assess"]
+    ]
+  },
+  ladder("FR-02", 9, "How does your organization prepare for and identify emerging AI risks over the next three to five years?", [
+    ["A","Future and emerging AI risks are not part of enterprise planning and are not formally assessed."],
+    ["B","Risks are recognized and discussed informally by leadership or technical teams but are not formally managed."],
+    ["C","Initial preparation is underway, including periodic horizon scanning for major developments."],
+    ["D","A structured emerging-risk process links developments to governance and control updates."],
+    ["E","Horizon scanning is continuous and informed by external benchmarking and expert input."]
+  ])
+];
+
+const SECTION_NAMES = {
+  1: "Organizational Profile",
+  2: "Strategy, Governance & Overall Maturity",
+  3: "Data and Visibility",
+  4: "Workforce & AI Literacy",
+  5: "Agentic and Autonomous AI",
+  6: "Control Testing, Risk Mitigation, and Security",
+  7: "AI Safety Incidents",
+  8: "Measurement, External Signals & Certification",
+  9: "Future & Emerging Risk"
+};
+
+// ---------------- Option coding ----------------
+// Sequential by position (A=1, B=2, ...) except reserved codes:
+//   99 = Unknown / Unable to assess / Prefer not to say
+//   98 = N/a and "None" (where "None" is a not-applicable style answer, e.g. EX-01 I)
+//   97 = Other (please specify)
+function optionCodeType(q, code, label) {
+  if (/^(unknown|unable to assess|prefer not to say)/i.test(label)) return "unknown";
+  if (/^N\/a/i.test(label) || q.noneOption === code) return "na_none";
+  if (/^other/i.test(label)) return "other";
+  return "sequential";
+}
+function optionValue(q, idx, code, label) {
+  const t = optionCodeType(q, code, label);
+  if (t === "unknown") return 99;
+  if (t === "na_none") return 98;
+  if (t === "other") return 97;
+  return idx + 1;
+}
+
+</script>
+<script>
+// ============================================================
+// Supabase connection (publishable key only; safe to ship in the page)
+// ============================================================
+const SUPABASE_URL = "https://eqcajylttihnfqhbenxh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_WioXQEWQLg8ahUod8uXHYg_B4qHhvJD";
+// "production": a link without ?rid= is rejected. "artifact": a link without ?rid= opens a demo copy that records nothing.
+const BUILD_TARGET = "production";
+
+// ---------------- State ----------------
+const state = {
+  answers: {},         // { qid: {value, label, score, tag, otherText, multi:[...], dual:{today:[...], threeyr:[...]}} }
+  order: [],           // visible question ids, computed each render pass
+  pos: 0,
+  stage: "intro",      // intro | survey | screenout | thanks
+  deviceId: null,
+  respondentToken: null,
+  live: false,         // true = recording to the database; false = demo copy, nothing recorded
+  saving: false
+};
+
+function uuid() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+function initIdentity() {
+  let id = load("fkpmg_device_id");
+  if (!id) { id = uuid(); store("fkpmg_device_id", id); }
+  state.deviceId = id;
+
+  const params = new URLSearchParams(window.location.search);
+  const rid = params.get("rid");
+  const preview = params.get("mode") === "preview" || (BUILD_TARGET === "artifact" && !rid);
+  if (preview) { state.live = false; state.respondentToken = "demo-" + uuid(); }
+  else { state.live = true; state.respondentToken = rid || null; }
+}
+
+// ---------------- Persistence stubs (wire to Supabase later) ----------------
+function persistLocal() {
+  if (!state.live) return;   // demo copy keeps nothing
+  store("fkpmg_progress_" + state.respondentToken, JSON.stringify({
+    answers: state.answers, pos: state.pos, stage: state.stage
+  }));
+}
+
+function restoreLocal() {
+  try {
+    const raw = load("fkpmg_progress_" + state.respondentToken);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state.answers = parsed.answers || {};
+      state.pos = parsed.pos || 0;
+      state.stage = parsed.stage || "intro";
+    }
+  } catch (e) { /* ignore corrupt local state */ }
+}
+
+// Analysis-ready long format: one row per selected option.
+// option_value is the numeric code (A=1, B=2, ...); score is the 1-5 maturity score for ladders.
+function flattenAnswer(q) {
+  const a = state.answers[q.id];
+  if (!a) return [];
+  const all = q.groups ? q.groups.flatMap(g => g.options) : q.options;
+  const meta = (code) => {
+    const idx = all.findIndex(o => o[0] === code);
+    return { code, value: idx >= 0 ? optionValue(q, idx, code, all[idx][1]) : null, label: all[idx] ? all[idx][1] : "" };
+  };
+  const base = { response_token: state.respondentToken, device_id: state.deviceId, question_id: q.id };
+  const rows = [];
+  if (q.type === "single" || q.type === "ladder" || q.type === "single_tag") {
+    if (a.value) {
+      const m = meta(a.value);
+      rows.push({ ...base, column: null, option_code: m.code, option_value: m.value, option_label: m.label,
+        score: q.type === "ladder" ? (a.score ?? null) : null, tag: a.tag || null, other_text: a.otherText || null });
+    }
+  } else if (q.type === "multi" || q.type === "multi_grouped") {
+    (a.multi || []).forEach(code => { const m = meta(code);
+      rows.push({ ...base, column: null, option_code: m.code, option_value: m.value, option_label: m.label, score: null, tag: null, other_text: a.otherText || null }); });
+  } else if (q.type === "dual_multi") {
+    [["today", "Today"], ["threeyr", "In 3 years"]].forEach(([k, name]) => (a.dual[k] || []).forEach(code => { const m = meta(code);
+      rows.push({ ...base, column: name, option_code: m.code, option_value: m.value, option_label: m.label, score: null, tag: null, other_text: a.otherText || null }); }));
+  }
+  return rows;
+}
+
+// Local progress only (called on every tap). The database is written when the respondent presses Next.
+function saveAnswerRemote(qid) { persistLocal(); }
+
+async function rpc(fn, args) {
+  let lastErr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + fn, {
+        method: "POST",
+        headers: { "apikey": SUPABASE_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify(args)
+      });
+      if (!res.ok) throw new Error("http " + res.status);
+      return await res.json();
+    } catch (e) {
+      lastErr = e;
+      await new Promise(r => setTimeout(r, 400 * (attempt + 1)));
+    }
+  }
+  throw lastErr;
+}
+
+const base = () => ({ p_token: state.respondentToken, p_device_id: state.deviceId });
+
+function rowsForServer(q) {
+  return flattenAnswer(q).map(r => ({ option_code: r.option_code, column: r.column, tag: r.tag, other_text: r.other_text }));
+}
+
+async function syncAnswer(q) {
+  if (!state.live) return true;
+  const out = await rpc("save_answer", { ...base(), p_question_id: q.id, p_rows: rowsForServer(q) });
+  return out && out.status === "ok";
+}
+
+// Questions that became hidden (skip logic) must not keep old answers.
+async function clearHiddenAnswers() {
+  for (const q of QUESTIONS) {
+    if (q.showIf && !q.showIf(state.answers) && state.answers[q.id]) {
+      const had = flattenAnswer(q).length > 0;
+      delete state.answers[q.id];
+      if (had && state.live) await rpc("save_answer", { ...base(), p_question_id: q.id, p_rows: [] });
+    }
+  }
+}
+
+// ---------------- Screen-out logic ----------------
+// Hard industry quotas are enforced in the database (atomic), not in the page.
+async function gateAfter(q) {
+  if (q.id === "P-01") {
+    if (!state.live) return false;
+    const out = await rpc("check_industry_quota", base());
+    if (out.status === "quota_full") return true;
+    if (out.status !== "ok") throw new Error("quota check rejected");
+    return false;
+  }
+  if (q.id === "P-03" && state.answers["P-03"].value === "F") {
+    if (state.live) await rpc("screen_out", { ...base(), p_reason: "revenue_prefer_not_to_say" });
+    return true;
+  }
+  return false;
+}
+
+// ---------------- Visibility / ordering ----------------
+function computeOrder() {
+  state.order = QUESTIONS.filter(q => !q.showIf || q.showIf(state.answers)).map(q => q.id);
+}
+
+function currentQuestion() {
+  computeOrder();
+  const qid = state.order[state.pos];
+  return QUESTIONS.find(q => q.id === qid);
+}
+
+function isAnswered(q) { return validate(q) === null; }
+
+function validate(q) {
+  const a = state.answers[q.id];
+  const oc = q.other ? otherCode(q) : null;
+  const needOther = "Please type your response in the box provided before moving ahead.";
+  if (q.type === "single" || q.type === "ladder") {
+    if (!a.value) return "Please select one response before moving ahead.";
+    if (oc && a.value === oc && !(a.otherText || "").trim()) return needOther;
+    return null;
+  }
+  if (q.type === "single_tag") {
+    if (!a.value) return "Please select one response before moving ahead.";
+    if (a.value !== tagSkipValue(q) && !a.tag) return "Please indicate whether this figure is tracked or estimated before moving ahead.";
+    return null;
+  }
+  if (q.type === "multi" || q.type === "multi_grouped") {
+    if (!a.multi.length) return q.max === 99 ? "Please select at least one response before moving ahead." : `Please select between 1 and ${q.max} responses before moving ahead.`;
+    if (oc && a.multi.includes(oc) && !(a.otherText || "").trim()) return needOther;
+    return null;
+  }
+  if (q.type === "dual_multi") {
+    const none = q.noneOption;
+    const ok = (arr) => arr.length === q.max || (none && arr.length === 1 && arr[0] === none);
+    if (!ok(a.dual.today) || !ok(a.dual.threeyr)) {
+      return `Please select ${q.max} responses in each column, or choose "Unable to assess", before moving ahead. (Today: ${a.dual.today.length} of ${q.max}, In 3 years: ${a.dual.threeyr.length} of ${q.max})`;
+    }
+    if (oc && (a.dual.today.includes(oc) || a.dual.threeyr.includes(oc)) && !(a.otherText || "").trim()) return needOther;
+    return null;
+  }
+  return "Please select a response before moving ahead.";
+}
+
+function allOptions(q) { return q.groups ? q.groups.flatMap(g => g.options) : q.options; }
+function otherCode(q) {
+  const match = allOptions(q).find(o => /^other/i.test(o[1]));
+  return match ? match[0] : null;
+}
+function tagSkipValue(q) { return (q.tagSkipFor && q.tagSkipFor[0]) || null; }
+
+// ---------------- Rendering ----------------
+const app = document.getElementById("app");
+
+function render() {
+  state.saving = false;
+  if (state.stage === "intro") { renderIntro(); return; }
+  if (state.stage === "screenout") { renderScreenout(); return; }
+  if (state.stage === "thanks") { renderComplete(); return; }
+  computeOrder();
+  if (state.pos >= state.order.length) { state.stage = "thanks"; persistLocal(); renderComplete(); return; }
+  const q = currentQuestion();
+  if (!state.answers[q.id]) state.answers[q.id] = blankAnswer(q);
+
+  const totalVisible = state.order.length;
+  const pct = Math.round((state.pos / totalVisible) * 100);
+
+  app.innerHTML = `
+    ${topbarHtml(pct)}
+    <div class="card">
+      <div class="meta"><span class="section-name">${SECTION_NAMES[q.section]}</span><span class="qid-pill">${q.id}</span></div>
+      <h1 class="prompt">${renderPromptWithHover(q)}</h1>
+      ${q.sub ? `<p class="instruction">${q.sub}</p>` : ""}
+      <div class="options">${renderOptions(q)}</div>
+      ${renderOtherField(q)}
+    </div>
+    <div class="navbar"><div class="col">
+      <div class="warn" id="warn" role="alert" hidden></div>
+      <div class="navinner">
+        <button class="btn ghost" id="backBtn" ${state.pos === 0 ? "disabled" : ""}>Back</button>
+        <div class="stepcount">${state.pos + 1} of ${totalVisible}</div>
+        <button class="btn primary" id="nextBtn">${state.pos === totalVisible - 1 ? "Finish" : "Next"}</button>
+      </div>
+    </div></div>
+  `;
+
+  wireOptionEvents(q);
+  document.getElementById("backBtn").onclick = () => { state.pos = Math.max(0, state.pos - 1); render(); };
+  document.getElementById("nextBtn").onclick = () => onNext(q);
+  updateNextEnabled(q);
+}
+
+function blankAnswer(q) {
+  if (q.type === "multi" || q.type === "multi_grouped") return { multi: [], otherText: "" };
+  if (q.type === "dual_multi") return { dual: { today: [], threeyr: [] }, otherText: "" };
+  if (q.type === "single_tag") return { value: null, tag: null };
+  return { value: null, otherText: "" };
+}
+
+function renderPromptWithHover(q) {
+  return escapeHtml(q.prompt);
+}
+
+function footnoteBadge(key) {
+  if (!key) return "";
+  return ` <span class="fninfo" tabindex="0" role="button" aria-label="Show definition" data-fn="${key}">i<span class="tooltip">${escapeHtml(FOOTNOTES[key])}</span></span>`;
+}
+
+function renderOptions(q) {
+  const a = state.answers[q.id];
+  if (q.type === "single") {
+    return q.options.map(([code, label]) => `
+      <label class="opt ${a.value === code ? "selected" : ""}" data-code="${code}">
+        <input type="radio" name="${q.id}" value="${code}" ${a.value === code ? "checked" : ""}/>
+        <span class="opt-label">${escapeHtml(label)}</span>
+      </label>`).join("");
+  }
+  if (q.type === "ladder") {
+    return q.options.map(([code, label, fn], i) => {
+      return `
+      <label class="opt ladder-opt ${a.value === code ? "selected" : ""}" data-code="${code}">
+        <input type="radio" name="${q.id}" value="${code}" ${a.value === code ? "checked" : ""}/>
+        <span class="opt-label">${escapeHtml(label)}${footnoteBadge(fn)}</span>
+      </label>`;
+    }).join("");
+  }
+  if (q.type === "single_tag") {
+    const showTag = a.value && a.value !== tagSkipValue(q);
+    return `
+      <div class="opt-grid">
+      ${q.options.map(([code, label]) => `
+        <label class="opt ${a.value === code ? "selected" : ""}" data-code="${code}">
+          <input type="radio" name="${q.id}" value="${code}" ${a.value === code ? "checked" : ""}/>
+          <span class="opt-label">${escapeHtml(label)}</span>
+        </label>`).join("")}
+      </div>
+      ${showTag ? `
+      <div class="tag-panel">
+        <div class="tag-label">Is this figure tracked or estimated?</div>
+        <div class="tag-choices">
+        ${q.tagOptions.map(([tcode, tlabel]) => `
+          <button type="button" class="tag-pill ${a.tag === tcode ? "active" : ""}" data-tag="${tcode}">${escapeHtml(tlabel)}</button>
+        `).join("")}
+        </div>
+      </div>` : ""}
+    `;
+  }
+  if (q.type === "multi") {
+    const count = a.multi.length;
+    return `
+      ${q.max === 99 ? "" : `<div class="chips"><span class="chip ${count >= q.max ? "full" : ""}">${count} of ${q.max} selected</span></div>`}
+      ${q.options.map(([code, label]) => {
+        const checked = a.multi.includes(code);
+        const disabled = !checked && q.max !== 99 && count >= q.max;
+        return `
+        <label class="opt ${checked ? "selected" : ""} ${disabled ? "disabled" : ""}" data-code="${code}">
+          <input type="checkbox" value="${code}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}/>
+          <span class="opt-label">${escapeHtml(label)}</span>
+        </label>`;
+      }).join("")}
+    `;
+  }
+  if (q.type === "multi_grouped") {
+    const count = a.multi.length;
+    return `
+      <div class="chips"><span class="chip ${count >= q.max ? "full" : ""}">${count} of ${q.max} selected</span></div>
+      ${q.groups.map(g => `
+        ${g.label ? `<div class="group-label">${escapeHtml(g.label)}</div>` : `<div class="group-divider"></div>`}
+        ${g.options.map(([code, label]) => {
+          const checked = a.multi.includes(code);
+          const disabled = !checked && count >= q.max;
+          return `
+          <label class="opt ${checked ? "selected" : ""} ${disabled ? "disabled" : ""}" data-code="${code}">
+            <input type="checkbox" value="${code}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}/>
+            <span class="opt-label">${escapeHtml(label)}</span>
+          </label>`;
+        }).join("")}
+      `).join("")}
+    `;
+  }
+  if (q.type === "dual_multi") {
+    return `
+      <div class="dual-head">
+        <div class="dual-spacer"></div>
+        <div class="dual-colhead">${q.columns[0]}</div>
+        <div class="dual-colhead">${q.columns[1]}</div>
+      </div>
+      ${q.options.map(([code, label]) => {
+        const inToday = a.dual.today.includes(code);
+        const inYr = a.dual.threeyr.includes(code);
+        return `
+        <div class="dual-row">
+          <div class="dual-label">${escapeHtml(label)}</div>
+          <div class="dual-cell"><input type="checkbox" class="dual-cb" data-col="today" data-code="${code}" ${inToday ? "checked" : ""} ${!inToday && a.dual.today.length >= q.max ? "disabled" : ""}/></div>
+          <div class="dual-cell"><input type="checkbox" class="dual-cb" data-col="threeyr" data-code="${code}" ${inYr ? "checked" : ""} ${!inYr && a.dual.threeyr.length >= q.max ? "disabled" : ""}/></div>
+        </div>`;
+      }).join("")}
+      <div class="chips dual-chips">
+        <span class="chip ${a.dual.today.length >= q.max ? "full" : ""}"><b>Today</b> ${a.dual.today.length} of ${q.max} selected</span>
+        <span class="chip ${a.dual.threeyr.length >= q.max ? "full" : ""}"><b>In 3 years</b> ${a.dual.threeyr.length} of ${q.max} selected</span>
+      </div>
+    `;
+  }
+  return "";
+}
+
+function renderOtherField(q) {
+  const a = state.answers[q.id];
+  const oc = q.other ? otherCode(q) : null;
+  if (!oc) return "";
+  let show = false;
+  if (q.type === "single") show = a.value === oc;
+  if (q.type === "multi" || q.type === "multi_grouped") show = a.multi.includes(oc);
+  if (q.type === "dual_multi") show = a.dual.today.includes(oc) || a.dual.threeyr.includes(oc);
+  if (!show) return "";
+  return `<input type="text" class="other-input" id="otherInput" placeholder="Please specify" value="${escapeHtml(a.otherText || "")}" />`;
+}
+
+function wireOptionEvents(q) {
+  const a = state.answers[q.id];
+
+  document.querySelectorAll(".fninfo").forEach(el => {
+    el.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); el.classList.toggle("open"); });
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.classList.toggle("open"); } });
+  });
+
+  if (q.type === "single" || q.type === "single_tag") {
+    document.querySelectorAll(`input[name="${q.id}"]`).forEach(el => {
+      el.addEventListener("change", () => {
+        a.value = el.value;
+        if (q.type === "single_tag" && el.value === tagSkipValue(q)) a.tag = null;
+        saveAnswerRemote(q.id);
+        render();
+      });
+    });
+  }
+  if (q.type === "ladder") {
+    document.querySelectorAll(`input[name="${q.id}"]`).forEach(el => {
+      el.addEventListener("change", () => {
+        a.value = el.value;
+        const idx = q.options.findIndex(o => o[0] === el.value);
+        const isNA = /^N\/a/i.test(q.options[idx][1]);
+        a.score = isNA ? null : idx + 1;
+        saveAnswerRemote(q.id);
+        render();
+      });
+    });
+  }
+  if (q.type === "single_tag") {
+    document.querySelectorAll(".tag-pill").forEach(el => {
+      el.addEventListener("click", () => {
+        a.tag = el.getAttribute("data-tag");
+        saveAnswerRemote(q.id);
+        render();
+      });
+    });
+  }
+  if (q.type === "multi" || q.type === "multi_grouped") {
+    const none = q.noneOption;
+    document.querySelectorAll(`.options input[type="checkbox"]`).forEach(el => {
+      el.addEventListener("change", () => {
+        const code = el.value;
+        if (el.checked) {
+          if (none && code === none) { a.multi = [none]; }
+          else { a.multi = a.multi.filter(c => c !== none); a.multi.push(code); }
+        } else {
+          a.multi = a.multi.filter(c => c !== code);
+        }
+        saveAnswerRemote(q.id);
+        render();
+      });
+    });
+  }
+  if (q.type === "dual_multi") {
+    const none = q.noneOption;
+    document.querySelectorAll(".dual-cb").forEach(el => {
+      el.addEventListener("change", () => {
+        const col = el.getAttribute("data-col");
+        const code = el.getAttribute("data-code");
+        let arr = a.dual[col];
+        if (el.checked) {
+          if (none && code === none) { arr = [none]; }
+          else { arr = arr.filter(c => c !== none); arr.push(code); }
+        } else {
+          arr = arr.filter(c => c !== code);
+        }
+        a.dual[col] = arr;
+        saveAnswerRemote(q.id);
+        render();
+      });
+    });
+  }
+
+  const otherInput = document.getElementById("otherInput");
+  if (otherInput) {
+    otherInput.addEventListener("input", () => {
+      a.otherText = otherInput.value;
+      updateNextEnabled(q);
+    });
+  }
+}
+
+function updateNextEnabled(q) {
+  // Next stays clickable; incomplete answers are caught in onNext with a visible warning.
+  const w = document.getElementById("warn");
+  if (w) { w.hidden = true; w.textContent = ""; }
+}
+
+function setBusy(on, label) {
+  state.saving = on;
+  const b = document.getElementById("nextBtn");
+  if (b) { b.disabled = on; if (label) b.textContent = on ? "Saving..." : label; }
+}
+
+function showWarn(msg) {
+  const w = document.getElementById("warn");
+  if (w) { w.textContent = msg; w.hidden = false; }
+}
+
+async function onNext(q) {
+  if (state.saving) return;
+  const msg = validate(q);
+  if (msg) { showWarn(msg); return; }
+  const label = document.getElementById("nextBtn").textContent;
+  setBusy(true, label);
+  try {
+    const ok = await syncAnswer(q);
+    if (!ok) throw new Error("save rejected");
+    await clearHiddenAnswers();
+    if (await gateAfter(q)) {
+      state.stage = "screenout";
+      persistLocal(); render(); return;
+    }
+    computeOrder();
+    if (state.pos >= state.order.length - 1) {
+      if (state.live) {
+        const done = await rpc("complete_respondent", base());
+        if (done.status !== "ok") throw new Error("complete rejected");
+      }
+      state.stage = "thanks";
+      persistLocal(); render(); return;
+    }
+    state.pos += 1;
+    persistLocal();
+    render();
+  } catch (e) {
+    setBusy(false, label);
+    showWarn("We could not save your answer. Please check your connection and press Next again.");
+  }
+}
+
+function topbarHtml(pct) {
+  return `
+    <div class="topbar">
+      <div class="col">
+        <div class="brand"><svg class="logo" xmlns="http://www.w3.org/2000/svg" x="0" y="0" viewBox="0 0 200 54" xml:space="preserve" style="color:#181716;fill:#181716;stroke-width:1px;font-family:Graphik, sans-serif"><path xmlns="http://www.w3.org/2000/svg" d="M113.3 18.2c0-5.8.1-11.2.4-16.2L98.4 4.9v1.4l1.5.2c1.1.1 1.8.5 2.2 1.1.4.7.7 1.7.9 3.2.2 2.9.4 9.5.3 19.9 0 10.3-.1 16.8-.3 19.3 5.5 1.2 9.8 1.7 13 1.7 6 0 10.7-1.7 14.1-5.2 3.4-3.4 5.2-8.2 5.2-14.1 0-4.7-1.3-8.6-3.9-11.7-2.6-3.1-5.9-4.6-9.8-4.6-2.6 0-5.3.7-8.3 2.1zm.3 30.8c-.2-3.2-.4-12.8-.4-28.5.9-.3 2.1-.5 3.6-.5 2.4 0 4.3 1.2 5.7 3.7 1.4 2.5 2.1 5.5 2.1 9.3 0 4.7-.8 8.5-2.4 11.7-1.6 3.1-3.6 4.7-6.1 4.7-.8-.2-1.6-.3-2.5-.4zM41 3H1v2l2.1.2c1.6.3 2.7.9 3.4 1.8.7 1 1.1 2.6 1.2 4.8.8 10.8.8 20.9 0 30.2-.2 2.2-.6 3.8-1.2 4.8-.7 1-1.8 1.6-3.4 1.8l-2.1.3v2h25.8v-2l-2.7-.2c-1.6-.2-2.7-.9-3.4-1.8-.7-1-1.1-2.6-1.2-4.8-.3-4-.5-8.6-.5-13.7l5.4.1c2.9.1 4.9 2.3 5.9 6.7h2V18.9h-2c-1 4.3-2.9 6.5-5.9 6.6l-5.4.1c0-9 .2-15.4.5-19.3h7.9c5.6 0 9.4 3.6 11.6 10.8l2.4-.7L41 3zm-4.7 30.8c0 5.2 1.5 9.5 4.4 12.9 2.9 3.4 7.2 5 12.6 5s9.8-1.7 13-5.2c3.2-3.4 4.7-7.7 4.7-12.9s-1.5-9.5-4.4-12.9c-2.9-3.4-7.2-5-12.6-5s-9.8 1.7-13 5.2c-3.2 3.4-4.7 7.7-4.7 12.9zm22.3-11.4c1.2 2.9 1.7 6.7 1.7 11.3 0 10.6-2.2 15.8-6.5 15.8-2.2 0-3.9-1.5-5.1-4.5-1.2-3-1.7-6.8-1.7-11.3C47 23.2 49.2 18 53.5 18c2.2-.1 3.9 1.4 5.1 4.4zm84.5 24.3c3.3 3.3 7.5 5 12.5 5 3.1 0 5.8-.6 8.2-1.9 2.4-1.2 4.3-2.7 5.6-4.5l-1-1.2c-2.2 1.7-4.7 2.5-7.6 2.5-4 0-7.1-1.3-9.2-4-2.2-2.7-3.2-6.1-3-10.5H170c0-4.8-1.2-8.7-3.7-11.8-2.5-3-6-4.5-10.5-4.5-5.6 0-9.9 1.8-13 5.3-3.1 3.5-4.6 7.8-4.6 12.9 0 5.2 1.6 9.4 4.9 12.7zm7.4-25.1c1.1-2.4 2.5-3.6 4.4-3.6 3 0 4.5 3.8 4.5 11.5l-10.6.2c.1-3 .6-5.7 1.7-8.1zm46.4-4c-2.7-1.2-6.1-1.9-10.2-1.9-4.2 0-7.5 1.1-10 3.2s-3.8 4.7-3.8 7.8c0 2.7.8 4.8 2.3 6.3 1.5 1.5 3.9 2.8 7 3.9 2.8 1 4.8 2 5.8 2.9 1 1 1.6 2.1 1.6 3.6 0 1.4-.5 2.7-1.6 3.7-1 1.1-2.4 1.6-4.2 1.6-4.4 0-7.7-3.2-10-9.6l-1.7.5.4 10c3.6 1.4 7.6 2.1 12 2.1 4.6 0 8.1-1 10.7-3.1 2.6-2 3.9-4.9 3.9-8.5 0-2.4-.6-4.4-1.9-5.9-1.3-1.5-3.4-2.8-6.4-4-3.3-1.2-5.6-2.3-6.8-3.3-1.2-1-1.8-2.2-1.8-3.7s.4-2.7 1.3-3.7 2-1.4 3.4-1.4c4 0 6.9 2.9 8.7 8.6l1.7-.5-.4-8.6zm-96.2-.9c-1.4-.7-2.9-1-4.6-1-1.7 0-3.4.7-5.3 2.1-1.9 1.4-3.3 3.3-4.4 5.9l.1-8-15.2 3v1.4l1.5.1c1.9.2 3 1.7 3.2 4.4.6 6.2.6 12.8 0 19.8-.2 2.7-1.3 4.1-3.2 4.4l-1.5.2v1.9h21.2V49l-2.7-.2c-1.9-.2-3-1.7-3.2-4.4-.6-5.8-.7-12-.2-18.4.6-1 1.9-1.6 3.9-1.8 2-.2 4.3.4 6.7 1.8l3.7-9.3z" style="color:#181716;fill:#181716;stroke-width:1px;font-family:Graphik, sans-serif"></path></svg></div>
+        ${pct === null ? "" : `<div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>`}
+      </div>
+    </div>`;
+}
+
+function renderIntro() {
+  app.innerHTML = `
+    ${topbarHtml(null)}
+    <div class="card page">
+      <div class="eyebrow-brand">Forbes Insights</div>
+      <h1 class="headline">Who is governing AI, and how well?</h1>
+      <p class="lede">Forbes Insights invites you to take part in a benchmarking survey on trusted AI.</p>
+      <p class="body">AI has moved from pilot to production, and from answering questions to taking action. Leaders are now expected to show how their organizations govern it, test it, secure it, and stand behind it.</p>
+      <p class="body">This survey looks at what is actually in place today: strategy and oversight, data and visibility, workforce readiness, autonomous agents, risk controls, incident response, and external assurance. There are no right answers. We are interested in an honest picture of current practice.</p>
+      <p class="body">The survey takes approximately 15 to 20 minutes. Please answer based on what is currently in place and operating in your organization, not on what is planned.</p>
+      <div class="notice">
+        <div class="notice-title">Your privacy</div>
+        <p>Forbes is committed to protecting your privacy. Your individual responses will be kept strictly confidential and will only be reported in aggregate.</p>
+      </div>
+      <button class="btn primary start" id="startBtn">Begin survey</button>
+    </div>
+  `;
+  document.getElementById("startBtn").onclick = () => { state.stage = "survey"; persistLocal(); render(); window.scrollTo(0, 0); };
+}
+
+function renderScreenout() {
+  app.innerHTML = `
+    ${topbarHtml(null)}
+    <div class="card page">
+      <div class="eyebrow-brand">Forbes Insights</div>
+      <h1 class="headline">Thank you for your interest.</h1>
+      <p class="lede">This study is focused on a specific group of senior leaders, and your profile falls outside it on this occasion.</p>
+      <p class="body">We are grateful for the time you gave and for your willingness to contribute. You may now close this window.</p>
+    </div>
+  `;
+}
+
+function renderComplete() {
+  app.innerHTML = `
+    ${topbarHtml(100)}
+    <div class="card page">
+      <div class="eyebrow-brand">Forbes Insights</div>
+      <h1 class="headline">Your perspective is now part of the benchmark.</h1>
+      <p class="lede">Your responses have been recorded. Thank you for the time and candor you brought to this survey.</p>
+      <p class="body">They will be combined with the views of senior leaders across industries to build a clearer picture of how organizations govern, secure and stand behind their AI.</p>
+      <p class="body">Findings will be published by Forbes Insights, adding to the evidence leaders need to move from AI ambition to AI accountability.</p>
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function renderMessage(headline, lede, body) {
+  app.innerHTML = `
+    ${topbarHtml(null)}
+    <div class="card page">
+      <div class="eyebrow-brand">Forbes Insights</div>
+      <h1 class="headline">${headline}</h1>
+      ${lede ? `<p class="lede">${lede}</p>` : ""}
+      ${body ? `<p class="body">${body}</p>` : ""}
+    </div>`;
+}
+
+// ---------------- Boot ----------------
+async function boot() {
+  initIdentity();
+  if (!state.live) {
+    // Demo copy: nothing is recorded. ?page= lets reviewers jump to a page.
+    const p = new URLSearchParams(window.location.search).get("page");
+    if (p === "intro" || p === "screenout" || p === "thanks") { state.stage = p; }
+    if (p === "survey") { state.stage = "survey"; state.pos = 0; }
+    render();
+    return;
+  }
+  const params = new URLSearchParams(window.location.search);
+  if (!params.get("rid")) { renderMessage("This link is not valid.", "Please use the personal link you were sent.", ""); return; }
+  renderMessage("One moment.", "", "Preparing your survey.");
+  try {
+    const out = await rpc("start_respondent", base());
+    if (out.status === "ok") {
+      if (out.resume) restoreLocal();
+      render();
+    } else if (out.status === "used") {
+      renderMessage("This link has already been used.", "Each survey link can be used once.", "If you believe this is a mistake, please contact the person who sent you the link.");
+    } else {
+      renderMessage("This link is not valid.", "Please use the personal link you were sent.", "");
+    }
+  } catch (e) {
+    renderMessage("We could not connect.", "Please check your connection and refresh this page.", "");
+  }
+}
+boot();
+
+</script>
+</body>
+</html>
