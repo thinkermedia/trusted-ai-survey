@@ -728,6 +728,15 @@ const BUILD_TARGET = "artifact";
 const APPENDED_FROM_SAMPLE = ["P-01","P-03","P-04"];
 // Question codes (P-02, G-01 ...) are shown in the full build and hidden in the client review build.
 const SHOW_QUESTION_IDS = false;
+// Answer-order randomization (client review build only). Display order changes; codes and values never do.
+const RANDOMIZE_OPTIONS = true;
+const RANDOM_CFG = {
+  "G-02":  { anchor: ["F"] },            // F = Other
+  "G-08":  { anchor: ["F", "G"] },       // F = Shared across multiple functions, G = Other
+  "IN-02": { anchor: ["I"] },            // I = Other
+  "FR-01": { anchor: ["L", "M"] },       // L = Other, M = Unable to assess
+  "EX-01": { anchor: ["H", "I"], groups: true }  // H = Other, I = None; group order shuffled
+};
 
 // ---------------- State ----------------
 const state = {
@@ -737,6 +746,7 @@ const state = {
   stage: "intro",      // intro | survey | screenout | thanks
   deviceId: null,
   respondentToken: null,
+  orders: {},          // randomized display order per question, fixed for the session
   live: false,         // true = recording to the database; false = demo copy, nothing recorded
   saving: false
 };
@@ -767,7 +777,7 @@ function initIdentity() {
 function persistLocal() {
   if (!state.live) return;   // demo copy keeps nothing
   store("fkpmg_progress_" + state.respondentToken, JSON.stringify({
-    answers: state.answers, pos: state.pos, stage: state.stage
+    answers: state.answers, pos: state.pos, stage: state.stage, orders: state.orders
   }));
 }
 
@@ -779,6 +789,7 @@ function restoreLocal() {
       state.answers = parsed.answers || {};
       state.pos = parsed.pos || 0;
       state.stage = parsed.stage || "intro";
+      state.orders = parsed.orders || {};
     }
   } catch (e) { /* ignore corrupt local state */ }
 }
@@ -924,6 +935,38 @@ function otherCode(q) {
 }
 function tagSkipValue(q) { return (q.tagSkipFor && q.tagSkipFor[0]) || null; }
 
+// ---------------- Answer-order randomization ----------------
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    let r;
+    if (window.crypto && crypto.getRandomValues) { const b = new Uint32Array(1); crypto.getRandomValues(b); r = b[0] % (i + 1); }
+    else { r = Math.floor(Math.random() * (i + 1)); }
+    [a[i], a[r]] = [a[r], a[i]];
+  }
+  return a;
+}
+// Flat list of options in the order the respondent sees them.
+function displayOptions(q) {
+  const cfg = RANDOMIZE_OPTIONS ? RANDOM_CFG[q.id] : null;
+  if (!cfg || q.groups) return q.options;
+  if (!state.orders[q.id]) {
+    const movable = q.options.filter(o => !cfg.anchor.includes(o[0])).map(o => o[0]);
+    state.orders[q.id] = [...shuffled(movable), ...cfg.anchor];
+  }
+  return state.orders[q.id].map(c => q.options ? q.options.find(o => o[0] === c) : null).filter(Boolean);
+}
+// Groups in display order (EX-01): group order shuffled, options inside a group keep their order,
+// Other and None are pulled out and anchored at the bottom in an unlabeled block.
+function displayGroups(q) {
+  const cfg = RANDOMIZE_OPTIONS ? RANDOM_CFG[q.id] : null;
+  if (!cfg) return q.groups;
+  const keep = q.groups.map(g => ({ label: g.label, options: g.options.filter(o => !cfg.anchor.includes(o[0])) })).filter(g => g.options.length);
+  if (!state.orders[q.id]) state.orders[q.id] = shuffled(keep.map((_, i) => i));
+  const anchored = cfg.anchor.map(c => allOptions(q).find(o => o[0] === c)).filter(Boolean);
+  return [...state.orders[q.id].map(i => keep[i]), { label: null, options: anchored }];
+}
+
 // ---------------- Rendering ----------------
 const app = document.getElementById("app");
 
@@ -984,7 +1027,7 @@ function footnoteBadge(key) {
 function renderOptions(q) {
   const a = state.answers[q.id];
   if (q.type === "single") {
-    return q.options.map(([code, label]) => `
+    return displayOptions(q).map(([code, label]) => `
       <label class="opt ${a.value === code ? "selected" : ""}" data-code="${code}">
         <input type="radio" name="${q.id}" value="${code}" ${a.value === code ? "checked" : ""}/>
         <span class="opt-label">${escapeHtml(label)}</span>
@@ -1024,7 +1067,7 @@ function renderOptions(q) {
     const count = a.multi.length;
     return `
       ${q.max === 99 ? "" : `<div class="chips"><span class="chip ${count >= q.max ? "full" : ""}">${count} of ${q.max} selected</span></div>`}
-      ${q.options.map(([code, label]) => {
+      ${displayOptions(q).map(([code, label]) => {
         const checked = a.multi.includes(code);
         const disabled = !checked && q.max !== 99 && count >= q.max;
         return `
@@ -1039,7 +1082,7 @@ function renderOptions(q) {
     const count = a.multi.length;
     return `
       <div class="chips"><span class="chip ${count >= q.max ? "full" : ""}">${count} of ${q.max} selected</span></div>
-      ${q.groups.map(g => `
+      ${displayGroups(q).map(g => `
         ${g.label ? `<div class="group-label">${escapeHtml(g.label)}</div>` : `<div class="group-divider"></div>`}
         ${g.options.map(([code, label]) => {
           const checked = a.multi.includes(code);
@@ -1060,7 +1103,7 @@ function renderOptions(q) {
         <div class="dual-colhead">${q.columns[0]}</div>
         <div class="dual-colhead">${q.columns[1]}</div>
       </div>
-      ${q.options.map(([code, label]) => {
+      ${displayOptions(q).map(([code, label]) => {
         const inToday = a.dual.today.includes(code);
         const inYr = a.dual.threeyr.includes(code);
         return `
