@@ -918,9 +918,9 @@ function validate(q) {
   }
   if (q.type === "dual_multi") {
     const none = q.noneOption;
-    const ok = (arr) => arr.length === q.max || (none && arr.length === 1 && arr[0] === none);
+    const ok = (arr) => arr.length >= 1 && arr.length <= q.max;
     if (!ok(a.dual.today) || !ok(a.dual.threeyr)) {
-      return `Please select ${q.max} responses in each column, or choose "Unable to assess", before moving ahead. (Today: ${a.dual.today.length} of ${q.max}, In 3 years: ${a.dual.threeyr.length} of ${q.max})`;
+      return `Please select between 1 and ${q.max} responses in each column before moving ahead.`;
     }
     if (oc && (a.dual.today.includes(oc) || a.dual.threeyr.includes(oc)) && !(a.otherText || "").trim()) return needOther;
     return null;
@@ -1308,11 +1308,7 @@ function renderComplete() {
   app.innerHTML = `
     ${topbarHtml(100)}
     <div class="card page">
-      <div class="eyebrow-brand">Forbes Insights</div>
-      <h1 class="headline">Your perspective is now part of the benchmark.</h1>
-      <p class="lede">Your responses have been recorded. Thank you for the time and candor you brought to this survey.</p>
-      <p class="body">They will be combined with the views of senior leaders across industries to build a clearer picture of how organizations govern, secure and stand behind their AI.</p>
-      <p class="body">Findings will be published by Forbes Insights, adding to the evidence leaders need to move from AI ambition to AI accountability.</p>
+      <p class="lede">Your responses have been recorded. Thank you for your time and insights.</p>
     </div>
   `;
 }
