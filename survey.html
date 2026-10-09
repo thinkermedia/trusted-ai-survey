@@ -160,6 +160,10 @@
   }
   .fninfo:hover .tooltip, .fninfo:focus .tooltip, .fninfo.open .tooltip { display: block; }
 
+  .term { border-bottom: 1px dotted currentColor; cursor: help; }
+  .term:focus { outline: none; background: var(--grey-20); }
+  #termtip { display: none; position: fixed; z-index: 1000; background: var(--ink); color: var(--paper); font-size: 13.5px; line-height: 1.55; font-weight: 400; font-style: normal; font-family: "Work Sans", sans-serif; padding: 14px 16px; border-radius: 3px; text-align: left; pointer-events: none; box-shadow: 0 4px 18px rgba(0,0,0,.25); }
+
   .tag-panel {
     margin-top: 18px;
     padding: 18px 20px;
@@ -326,6 +330,81 @@ const FOOTNOTES = {
   highrisk: "An AI system is one that either serves as a safety component in regulated products or is used in specific high-stakes areas (biometrics, critical infrastructure, education, employment, public services, law enforcement, migration and border control, and democratic processes) that could seriously affect the health, safety, or fundamental rights of individuals.",
   material: "The degree to which an AI system, AI-related risk, or AI-enabled decision could reasonably be expected to influence business outcomes, stakeholder decisions, regulatory obligations, financial performance, or impacts on individuals."
 };
+
+
+// ---------------- Term definitions (hover-over text) ----------------
+const TERMS = [
+  { key: "resp", re: /Responsible AI/gi, def: "AI that is valid and reliable, safe, secure and resilient, accountable and transparent, explainable and interpretable, privacy-enhanced, and fair with harmful bias managed. Used interchangeably with Trusted AI in this survey." },
+  { key: "shadow", re: /shadow['’]? AI/gi, def: "Shadow AI describes the use of AI technology which isn't captured in an organization's approved systems and processes. It is a form of shadow IT (or 'grey IT')." },
+  { key: "agentic", re: /agentic( AI)?/gi, def: "Systems composed of multiple coordinated AI agents that can break down tasks, collaborate, and pursue complex objectives autonomously over extended periods. These systems are designed to operate in more open-ended, less predictable physical or virtual environments and to function with minimal human supervision." },
+  { key: "auton", re: /autonomous( AI)?( systems?)?/gi, def: "A system that has a set of learning, adaptive and analytical capabilities to respond to situations that were not pre-programmed or anticipated (i.e., decision-based responses) prior to system deployment." },
+  { key: "incident", re: /AI(-related)? incidents?|(?<=AI safety )incidents?/gi, def: "An event, circumstance, or series of events where the development, use, or malfunction of one or more AI systems directly or indirectly leads to harm: injury or harm to health; disruption of critical infrastructure; violation of human rights or of legal obligations protecting fundamental, labor and intellectual property rights; or harm to property, communities, or the environment." },
+  { key: "safety", re: /AI safety/gi, def: "Property of a system such that it does not, under defined conditions, lead to a state in which human life, health, property, or the environment is endangered." },
+  { key: "assure", re: /assurance|certifications?/gi, def: "Independent validation that an AI system or AI management system meets defined trust, risk, compliance, or performance standards — typically performed by a third party (e.g., ISO/IEC 42001 certification)." },
+  { key: "material", re: /material( AI)?( systems?)?/gi, def: "The degree to which an AI system, AI-related risk, or AI-enabled decision could reasonably be expected to influence business outcomes, stakeholder decisions, regulatory obligations, financial performance, or impacts on individuals." },
+  { key: "highrisk", re: /high-risk/gi, def: "An AI system is one that either serves as a safety component in regulated products or is used in specific high-stakes areas (biometrics, critical infrastructure, education, employment, public services, law enforcement, migration and border control, and democratic processes) that could seriously affect the health, safety, or fundamental rights of individuals." },
+  { key: "agent", re: /\bAI agents?\b|\bagents?\b/gi, def: "Software programs that can interact with their environment, receive information, and undertake self-directed actions in service of a larger, externally specified goal." },
+  { key: "aisys", re: /\bAI systems?\b/gi, def: "An engineered or machine-based system that can, for a given set of objectives, generate outputs such as predictions, recommendations, or decisions influencing real or virtual environments, with varying levels of autonomy." }
+];
+let termSeen = new Set();
+// Wraps defined terms in hover-over spans. Prompt: every term. Options: first use of a term per screen, if not already shown in the prompt.
+function termify(text, isPrompt) {
+  const found = [];
+  TERMS.forEach(t => {
+    t.re.lastIndex = 0;
+    let m;
+    while ((m = t.re.exec(text)) !== null) {
+      if (m[0].length === 0) { t.re.lastIndex++; continue; }
+      found.push({ s: m.index, e: m.index + m[0].length, t });
+    }
+  });
+  found.sort((a, b) => a.s - b.s || (b.e - b.s) - (a.e - a.s));
+  let out = "", pos = 0, blocked = 0;
+  const used = new Set();
+  for (const f of found) {
+    if (f.s < Math.max(pos, blocked)) continue;
+    if (used.has(f.t.key) || (!isPrompt && termSeen.has(f.t.key))) { blocked = f.e; continue; }
+    out += escapeHtml(text.slice(pos, f.s)) +
+      `<span class="term" tabindex="0" role="button" aria-label="Show definition" data-def="${escapeHtml(f.t.def)}">${escapeHtml(text.slice(f.s, f.e))}</span>`;
+    pos = f.e; used.add(f.t.key);
+  }
+  out += escapeHtml(text.slice(pos));
+  used.forEach(k => termSeen.add(k));
+  return out;
+}
+function termOpt(q, label) {
+  if (q.id === "P-04") return escapeHtml(label);
+  return termify(label, false);
+}
+(function termTip() {
+  let tip = null, cur = null;
+  function ensure() {
+    if (!tip) { tip = document.createElement("div"); tip.id = "termtip"; tip.setAttribute("role", "tooltip"); document.body.appendChild(tip); }
+    return tip;
+  }
+  function show(el) {
+    const t = ensure(); cur = el; t.textContent = el.getAttribute("data-def"); t.style.display = "block";
+    const r = el.getBoundingClientRect(), w = Math.min(340, window.innerWidth - 24);
+    t.style.width = w + "px";
+    let left = Math.max(12, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 12));
+    t.style.left = left + "px";
+    const h = t.offsetHeight;
+    let top = r.top - h - 10;
+    if (top < 8) top = r.bottom + 10;
+    t.style.top = top + "px";
+  }
+  function hide() { if (tip) tip.style.display = "none"; cur = null; }
+  document.addEventListener("mouseover", e => { const el = e.target.closest && e.target.closest(".term"); if (el) show(el); });
+  document.addEventListener("mouseout", e => { const el = e.target.closest && e.target.closest(".term"); if (el && !(e.relatedTarget && el.contains(e.relatedTarget))) hide(); });
+  document.addEventListener("focusin", e => { const el = e.target.closest && e.target.closest(".term"); if (el) show(el); });
+  document.addEventListener("focusout", e => { if (e.target.closest && e.target.closest(".term")) hide(); });
+  document.addEventListener("click", e => {
+    const el = e.target.closest && e.target.closest(".term");
+    if (el) { e.preventDefault(); e.stopPropagation(); if (cur === el && tip.style.display === "block") hide(); else show(el); }
+    else hide();
+  }, true);
+  window.addEventListener("scroll", hide, true);
+})();
 
 function ladder(id, section, prompt, opts, hover) {
   return { id, section, type: "ladder", prompt, options: opts, hover: hover || null };
@@ -1016,7 +1095,8 @@ function blankAnswer(q) {
 }
 
 function renderPromptWithHover(q) {
-  return escapeHtml(q.prompt);
+  termSeen = new Set();
+  return termify(q.prompt, true);
 }
 
 function footnoteBadge(key) {
@@ -1030,7 +1110,7 @@ function renderOptions(q) {
     return displayOptions(q).map(([code, label]) => `
       <label class="opt ${a.value === code ? "selected" : ""}" data-code="${code}">
         <input type="radio" name="${q.id}" value="${code}" ${a.value === code ? "checked" : ""}/>
-        <span class="opt-label">${escapeHtml(label)}</span>
+        <span class="opt-label">${termOpt(q, label)}</span>
       </label>`).join("");
   }
   if (q.type === "ladder") {
@@ -1038,7 +1118,7 @@ function renderOptions(q) {
       return `
       <label class="opt ladder-opt ${a.value === code ? "selected" : ""}" data-code="${code}">
         <input type="radio" name="${q.id}" value="${code}" ${a.value === code ? "checked" : ""}/>
-        <span class="opt-label">${escapeHtml(label)}${footnoteBadge(fn)}</span>
+        <span class="opt-label">${termOpt(q, label)}</span>
       </label>`;
     }).join("");
   }
@@ -1049,7 +1129,7 @@ function renderOptions(q) {
       ${q.options.map(([code, label]) => `
         <label class="opt ${a.value === code ? "selected" : ""}" data-code="${code}">
           <input type="radio" name="${q.id}" value="${code}" ${a.value === code ? "checked" : ""}/>
-          <span class="opt-label">${escapeHtml(label)}</span>
+          <span class="opt-label">${termOpt(q, label)}</span>
         </label>`).join("")}
       </div>
       ${showTag ? `
@@ -1073,7 +1153,7 @@ function renderOptions(q) {
         return `
         <label class="opt ${checked ? "selected" : ""} ${disabled ? "disabled" : ""}" data-code="${code}">
           <input type="checkbox" value="${code}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}/>
-          <span class="opt-label">${escapeHtml(label)}</span>
+          <span class="opt-label">${termOpt(q, label)}</span>
         </label>`;
       }).join("")}
     `;
@@ -1090,7 +1170,7 @@ function renderOptions(q) {
           return `
           <label class="opt ${checked ? "selected" : ""} ${disabled ? "disabled" : ""}" data-code="${code}">
             <input type="checkbox" value="${code}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""}/>
-            <span class="opt-label">${escapeHtml(label)}</span>
+            <span class="opt-label">${termOpt(q, label)}</span>
           </label>`;
         }).join("")}
       `).join("")}
