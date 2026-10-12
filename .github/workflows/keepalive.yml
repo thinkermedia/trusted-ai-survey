@@ -1,0 +1,15 @@
+name: Supabase keep-alive
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping database
+        run: |
+          curl -sS -f -X POST "https://eqcajylttihnfqhbenxh.supabase.co/rest/v1/rpc/get_portal_stats" \
+            -H "apikey: sb_publishable_WioXQEWQLg8ahUod8uXHYg_B4qHhvJD" \
+            -H "Content-Type: application/json" \
+            -d '{"p_password":"keepalive"}'
