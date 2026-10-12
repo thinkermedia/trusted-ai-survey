@@ -827,7 +827,10 @@ const state = {
   respondentToken: null,
   orders: {},          // randomized display order per question, fixed for the session
   live: false,         // true = recording to the database; false = demo copy, nothing recorded
-  saving: false
+  saving: false,
+  saveChain: Promise.resolve(),   // background saves run in order, one after another
+  failedSaves: new Set(),         // questions whose background save did not go through
+  synced: {}                      // question id -> answer rows last confirmed by the database
 };
 
 function uuid() {
@@ -931,8 +934,39 @@ function rowsForServer(q) {
 
 async function syncAnswer(q) {
   if (!state.live) return true;
-  const out = await rpc("save_answer", { ...base(), p_question_id: q.id, p_rows: rowsForServer(q) });
-  return out && out.status === "ok";
+  const rows = rowsForServer(q), sig = JSON.stringify(rows);
+  const out = await rpc("save_answer", { ...base(), p_question_id: q.id, p_rows: rows });
+  const ok = !!(out && out.status === "ok");
+  if (ok) state.synced[q.id] = sig;
+  return ok;
+}
+
+// Saves the answer in the background so the respondent moves on straight away.
+function enqueueSave(q) {
+  state.saveChain = state.saveChain.then(async () => {
+    try {
+      const ok = await syncAnswer(q);
+      if (!ok) throw new Error("save rejected");
+      await clearHiddenAnswers();
+      state.failedSaves.delete(q.id);
+    } catch (e) { state.failedSaves.add(q.id); }
+  });
+  return state.saveChain;
+}
+
+// Waits for background saves, retries any that failed, and re-saves any answer the database has not confirmed.
+async function flushSaves() {
+  await state.saveChain;
+  if (!state.live) return true;
+  for (const id of state.order) {
+    const q = QUESTIONS.find(x => x.id === id);
+    if (!q || !state.answers[id]) continue;
+    if (state.failedSaves.has(id) || state.synced[id] !== JSON.stringify(rowsForServer(q))) {
+      if (!(await syncAnswer(q))) return false;
+      state.failedSaves.delete(id);
+    }
+  }
+  return true;
 }
 
 // Questions that became hidden (skip logic) must not keep old answers.
@@ -1319,9 +1353,20 @@ async function onNext(q) {
   if (state.saving) return;
   const msg = validate(q);
   if (msg) { showWarn(msg); return; }
+  const isLast = state.pos >= state.order.length - 1;
+  const needsGate = q.id === "P-01" || (q.id === "P-03" && state.answers["P-03"].value === "F");
+  // Quota checks, screen-outs and the final submit need the database first. Every other question moves on at once.
+  if (!needsGate && !isLast) {
+    enqueueSave(q);
+    state.pos += 1;
+    persistLocal();
+    render();
+    return;
+  }
   const label = document.getElementById("nextBtn").textContent;
   setBusy(true, label);
   try {
+    await state.saveChain;
     const ok = await syncAnswer(q);
     if (!ok) throw new Error("save rejected");
     await clearHiddenAnswers();
@@ -1331,6 +1376,7 @@ async function onNext(q) {
     }
     computeOrder();
     if (state.pos >= state.order.length - 1) {
+      if (!(await flushSaves())) throw new Error("save rejected");
       if (state.live) {
         const done = await rpc("complete_respondent", base());
         if (done.status !== "ok") throw new Error("complete rejected");
